@@ -169,31 +169,78 @@ router.post('/apply-job/:jobId', async (req: AuthenticatedRequest, res: Response
 // ---- Feedback History ----
 
 router.get('/feedback-history', async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  if (!pool) { res.json({ feedback: [] }); return; }
   try {
     const candidateId = req.user!.id;
-    const assessFb = await pool.query(
-      'SELECT assessment_title AS source, skill, feedback, score_raw AS score, status, created_at FROM assessment_submissions WHERE user_id=$1 ORDER BY created_at DESC',
-      [candidateId]
-    );
-    const projectFb = await pool.query(
-      `SELECT pa.project_title AS source, pa.evaluator_feedback AS feedback, pa.evaluator_score::text AS score, pa.status, pa.evaluated_at AS created_at
-       FROM project_applications pa WHERE pa.user_id=$1 AND pa.evaluator_feedback IS NOT NULL ORDER BY pa.evaluated_at DESC`,
-      [candidateId]
-    );
-    const appFb = await pool.query(
-      `SELECT j.title AS source, ja.employer_feedback AS feedback, ja.status, ja.updated_at AS created_at
-       FROM job_applications ja JOIN jobs j ON ja.job_id=j.id
-       WHERE ja.candidate_id=$1 AND ja.employer_feedback != '' ORDER BY ja.updated_at DESC`,
-      [candidateId]
-    );
-    res.json({
-      feedback: [
-        ...assessFb.rows.map((r) => ({ ...r, type: 'assessment' })),
-        ...projectFb.rows.map((r) => ({ ...r, type: 'project' })),
-        ...appFb.rows.map((r) => ({ ...r, type: 'job_application' })),
-      ].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()),
-    });
+
+    if (pool) {
+      try {
+        const assessFb = await pool.query(
+          'SELECT assessment_title AS source, skill, feedback, score_raw AS score, status, created_at FROM assessment_submissions WHERE user_id=$1 ORDER BY created_at DESC',
+          [candidateId]
+        );
+        const projectFb = await pool.query(
+          `SELECT pa.project_title AS source, pa.evaluator_feedback AS feedback, pa.evaluator_score::text AS score, pa.status, pa.evaluated_at AS created_at
+           FROM project_applications pa WHERE pa.user_id=$1 AND pa.evaluator_feedback IS NOT NULL ORDER BY pa.evaluated_at DESC`,
+          [candidateId]
+        );
+        const appFb = await pool.query(
+          `SELECT j.title AS source, ja.employer_feedback AS feedback, ja.status, ja.updated_at AS created_at
+           FROM job_applications ja JOIN jobs j ON ja.job_id=j.id
+           WHERE ja.candidate_id=$1 AND ja.employer_feedback != '' ORDER BY ja.updated_at DESC`,
+          [candidateId]
+        );
+        res.json({
+          feedback: [
+            ...assessFb.rows.map((r) => ({ ...r, type: 'assessment' })),
+            ...projectFb.rows.map((r) => ({ ...r, type: 'project' })),
+            ...appFb.rows.map((r) => ({ ...r, type: 'job_application' })),
+          ].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()),
+        });
+        return;
+      } catch {
+        // Fall through
+      }
+    }
+
+    const { getSubmissionsByUser } = await import('../models/assessmentModel');
+    const { getProjectApplicationsByUser } = await import('../models/projectModel');
+    const { getCandidateApplications } = await import('../models/employerModel');
+
+    const assessSubs = await getSubmissionsByUser(candidateId);
+    const projApps = await getProjectApplicationsByUser(candidateId);
+    const jobApps = await getCandidateApplications(candidateId);
+
+    const feedback = [
+      ...assessSubs.filter((s: { feedback?: string }) => s.feedback).map((s: { assessment_title: string; skill: string; feedback: string; score_raw: string; status: string; created_at: string }) => ({
+        source: s.assessment_title,
+        skill: s.skill,
+        feedback: s.feedback,
+        score: s.score_raw,
+        status: s.status,
+        type: 'assessment' as const,
+        created_at: s.created_at,
+      })),
+      ...projApps.filter((p: { evaluator_feedback?: string | null }) => p.evaluator_feedback).map((p: { project_title: string; evaluator_feedback?: string | null; evaluator_score?: number | null; status: string; evaluated_at?: string | null; created_at: string }) => ({
+        source: p.project_title,
+        skill: undefined,
+        feedback: p.evaluator_feedback || '',
+        score: p.evaluator_score != null ? String(p.evaluator_score) : undefined,
+        status: p.status,
+        type: 'project' as const,
+        created_at: p.evaluated_at || p.created_at,
+      })),
+      ...jobApps.filter((j) => j.employer_feedback).map((j) => ({
+        source: j.job_title,
+        skill: undefined,
+        feedback: j.employer_feedback,
+        score: undefined,
+        status: j.status,
+        type: 'job_application' as const,
+        created_at: j.updated_at,
+      })),
+    ].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+
+    res.json({ feedback });
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'Failed to fetch feedback history' });
   }

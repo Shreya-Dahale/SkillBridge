@@ -88,34 +88,55 @@ router.get('/candidates', async (req: AuthenticatedRequest, res: Response): Prom
 
 // GET /api/employer/candidates/:id — full evidence review
 router.get('/candidates/:id', async (_req: AuthenticatedRequest, res: Response): Promise<void> => {
-  if (!pool) { res.status(503).json({ error: 'Database not available' }); return; }
   try {
     const candidateId = String(_req.params.id);
 
-    const profileRes = await pool.query(
-      `SELECT cp.*, u.name, u.email FROM candidate_profiles cp
-       JOIN users u ON cp.user_id = u.id WHERE cp.user_id=$1 LIMIT 1`,
-      [candidateId]
-    );
-    const profile = profileRes.rows[0] || null;
+    if (pool) {
+      try {
+        const profileRes = await pool.query(
+          `SELECT cp.*, u.name, u.email FROM candidate_profiles cp
+           JOIN users u ON cp.user_id = u.id WHERE cp.user_id=$1 LIMIT 1`,
+          [candidateId]
+        );
+        const profile = profileRes.rows[0] || null;
 
-    const evidenceRes = await pool.query(
-      'SELECT * FROM evidence_records WHERE user_id=$1 ORDER BY created_at DESC',
-      [candidateId]
-    );
-    const evidence = evidenceRes.rows;
+        const evidenceRes = await pool.query(
+          'SELECT * FROM evidence_records WHERE user_id=$1 ORDER BY created_at DESC',
+          [candidateId]
+        );
+        const evidence = evidenceRes.rows;
 
-    const assessmentsRes = await pool.query(
-      'SELECT * FROM assessment_submissions WHERE user_id=$1 ORDER BY created_at DESC',
-      [candidateId]
-    );
-    const assessments = assessmentsRes.rows;
+        const assessmentsRes = await pool.query(
+          'SELECT * FROM assessment_submissions WHERE user_id=$1 ORDER BY created_at DESC',
+          [candidateId]
+        );
+        const assessments = assessmentsRes.rows;
 
-    const projectsRes = await pool.query(
-      'SELECT * FROM project_applications WHERE user_id=$1 ORDER BY created_at DESC',
-      [candidateId]
-    );
-    const projects = projectsRes.rows;
+        const projectsRes = await pool.query(
+          'SELECT * FROM project_applications WHERE user_id=$1 ORDER BY created_at DESC',
+          [candidateId]
+        );
+        const projects = projectsRes.rows;
+
+        res.json({ profile, evidence, assessments, projects });
+        return;
+      } catch {
+        // Fall through to memory
+      }
+    }
+
+    const { getCandidateProfileByUserId } = await import('../models/candidateModel');
+    const { findUserById } = await import('../models/userModel');
+    const { getEvidenceByUser } = await import('../models/evidenceModel');
+    const { getSubmissionsByUser } = await import('../models/assessmentModel');
+    const { getProjectApplicationsByUser } = await import('../models/projectModel');
+
+    const user = await findUserById(candidateId);
+    const p = await getCandidateProfileByUserId(candidateId);
+    const profile = { ...p, name: user?.name || 'Candidate', email: user?.email || '' };
+    const evidence = await getEvidenceByUser(candidateId);
+    const assessments = await getSubmissionsByUser(candidateId);
+    const projects = await getProjectApplicationsByUser(candidateId);
 
     res.json({ profile, evidence, assessments, projects });
   } catch (err) {

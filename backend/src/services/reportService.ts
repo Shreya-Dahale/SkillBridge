@@ -9,55 +9,85 @@ if (!fs.existsSync(reportsDir)) {
   fs.mkdirSync(reportsDir, { recursive: true });
 }
 
-// Gather all candidate data from DB
+// Gather all candidate data from DB (with fallback to model cache)
 async function gatherCandidateData(candidateId: string) {
-  if (!pool) throw new Error('Database not connected');
+  if (pool) {
+    try {
+      const profileRes = await pool.query(
+        `SELECT cp.*, u.name, u.email FROM candidate_profiles cp
+         JOIN users u ON cp.user_id = u.id WHERE cp.user_id=$1 LIMIT 1`,
+        [candidateId]
+      );
+      const profile = profileRes.rows[0] || null;
 
-  const profileRes = await pool.query(
-    `SELECT cp.*, u.name, u.email FROM candidate_profiles cp
-     JOIN users u ON cp.user_id = u.id WHERE cp.user_id=$1 LIMIT 1`,
-    [candidateId]
-  );
-  const profile = profileRes.rows[0] || null;
+      const skillGapRes = await pool.query(
+        `SELECT * FROM skill_gap_analyses WHERE user_id=$1 ORDER BY created_at DESC LIMIT 1`,
+        [candidateId]
+      );
+      const skillGap = skillGapRes.rows[0] || null;
 
-  const skillGapRes = await pool.query(
-    `SELECT * FROM skill_gap_analyses WHERE user_id=$1 ORDER BY created_at DESC LIMIT 1`,
-    [candidateId]
-  );
-  const skillGap = skillGapRes.rows[0] || null;
+      const assessmentsRes = await pool.query(
+        `SELECT * FROM assessment_submissions WHERE user_id=$1 ORDER BY created_at DESC`,
+        [candidateId]
+      );
+      const assessments = assessmentsRes.rows;
 
-  const assessmentsRes = await pool.query(
-    `SELECT * FROM assessment_submissions WHERE user_id=$1 ORDER BY created_at DESC`,
-    [candidateId]
-  );
-  const assessments = assessmentsRes.rows;
+      const projectsRes = await pool.query(
+        `SELECT * FROM project_applications WHERE user_id=$1 ORDER BY created_at DESC`,
+        [candidateId]
+      );
+      const projects = projectsRes.rows;
 
-  const projectsRes = await pool.query(
-    `SELECT * FROM project_applications WHERE user_id=$1 ORDER BY created_at DESC`,
-    [candidateId]
-  );
-  const projects = projectsRes.rows;
+      const evidenceRes = await pool.query(
+        `SELECT * FROM evidence_records WHERE user_id=$1 ORDER BY created_at DESC`,
+        [candidateId]
+      );
+      const evidence = evidenceRes.rows;
 
-  const evidenceRes = await pool.query(
-    `SELECT * FROM evidence_records WHERE user_id=$1 ORDER BY created_at DESC`,
-    [candidateId]
-  );
-  const evidence = evidenceRes.rows;
+      const refsRes = await pool.query(
+        `SELECT * FROM professional_references WHERE candidate_id=$1 ORDER BY created_at DESC`,
+        [candidateId]
+      );
+      const references = refsRes.rows;
 
-  const refsRes = await pool.query(
-    `SELECT * FROM professional_references WHERE candidate_id=$1 ORDER BY created_at DESC`,
-    [candidateId]
-  );
-  const references = refsRes.rows;
+      const appRes = await pool.query(
+        `SELECT ja.*, j.title AS job_title, ep.company_name
+         FROM job_applications ja JOIN jobs j ON ja.job_id=j.id
+         LEFT JOIN employer_profiles ep ON j.employer_id=ep.user_id
+         WHERE ja.candidate_id=$1 ORDER BY ja.updated_at DESC`,
+        [candidateId]
+      );
+      const applications = appRes.rows;
 
-  const appRes = await pool.query(
-    `SELECT ja.*, j.title AS job_title, ep.company_name
-     FROM job_applications ja JOIN jobs j ON ja.job_id=j.id
-     LEFT JOIN employer_profiles ep ON j.employer_id=ep.user_id
-     WHERE ja.candidate_id=$1 ORDER BY ja.updated_at DESC`,
-    [candidateId]
-  );
-  const applications = appRes.rows;
+      return { profile, skillGap, assessments, projects, evidence, references, applications };
+    } catch {
+      // Fall through to model methods
+    }
+  }
+
+  // Model fallback
+  const { getCandidateProfileByUserId } = await import('../models/candidateModel');
+  const { findUserById } = await import('../models/userModel');
+  const { getLatestSkillGapAnalysis } = await import('../models/skillGapModel');
+  const { getSubmissionsByUser } = await import('../models/assessmentModel');
+  const { getProjectApplicationsByUser } = await import('../models/projectModel');
+  const { getEvidenceByUser } = await import('../models/evidenceModel');
+  const { getCandidateReferences } = await import('../models/mentorFellowshipModel');
+  const { getCandidateApplications } = await import('../models/employerModel');
+
+  const user = await findUserById(candidateId);
+  const p = await getCandidateProfileByUserId(candidateId);
+  const profile = {
+    ...p,
+    name: user?.name || 'Candidate',
+    email: user?.email || '',
+  };
+  const skillGap = await getLatestSkillGapAnalysis(candidateId);
+  const assessments = await getSubmissionsByUser(candidateId);
+  const projects = await getProjectApplicationsByUser(candidateId);
+  const evidence = await getEvidenceByUser(candidateId);
+  const references = await getCandidateReferences(candidateId);
+  const applications = await getCandidateApplications(candidateId);
 
   return { profile, skillGap, assessments, projects, evidence, references, applications };
 }

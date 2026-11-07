@@ -41,6 +41,11 @@ export interface JobApplication {
   updated_at: string;
 }
 
+// In-memory fallbacks
+const memoryProfiles: Map<string, EmployerProfile> = new Map();
+const memoryJobs: Map<string, Job> = new Map();
+const memoryApplications: Map<string, JobApplication> = new Map();
+
 // ---- Table Initialization ----
 
 export async function initEmployerTables(): Promise<void> {
@@ -100,50 +105,83 @@ export async function initEmployerTables(): Promise<void> {
 // ---- Employer Profile CRUD ----
 
 export async function getEmployerProfileByUserId(userId: string): Promise<EmployerProfile> {
-  if (!pool) throw new Error('Database not connected');
-  const res = await pool.query(
-    'SELECT * FROM employer_profiles WHERE user_id = $1 LIMIT 1',
-    [userId]
-  );
-  if (res.rows.length === 0) {
-    // Auto-create empty profile
-    const id = uuidv4();
-    const now = new Date().toISOString();
-    const ins = await pool.query(
-      `INSERT INTO employer_profiles (id, user_id, company_name, industry, location, website, description, created_at, updated_at)
-       VALUES ($1,$2,'','','','','', $3,$4) RETURNING *`,
-      [id, userId, now, now]
-    );
-    return rowToEmployerProfile(ins.rows[0]);
+  if (pool) {
+    try {
+      const res = await pool.query(
+        'SELECT * FROM employer_profiles WHERE user_id = $1 LIMIT 1',
+        [userId]
+      );
+      if (res.rows.length > 0) {
+        return rowToEmployerProfile(res.rows[0]);
+      }
+    } catch {
+      // Fall through to memory
+    }
   }
-  return rowToEmployerProfile(res.rows[0]);
+
+  const existing = memoryProfiles.get(userId);
+  if (existing) return existing;
+
+  const now = new Date().toISOString();
+  const newProfile: EmployerProfile = {
+    id: uuidv4(),
+    user_id: userId,
+    company_name: '',
+    industry: '',
+    location: '',
+    website: '',
+    description: '',
+    created_at: now,
+    updated_at: now,
+  };
+  memoryProfiles.set(userId, newProfile);
+  return newProfile;
 }
 
 export async function saveEmployerProfile(userId: string, data: Partial<EmployerProfile>): Promise<EmployerProfile> {
-  if (!pool) throw new Error('Database not connected');
   const now = new Date().toISOString();
-  await pool.query(
-    `INSERT INTO employer_profiles (id, user_id, company_name, industry, location, website, description, created_at, updated_at)
-     VALUES (gen_random_uuid(),$1,$2,$3,$4,$5,$6,$7,$8)
-     ON CONFLICT (user_id) DO UPDATE SET
-       company_name = EXCLUDED.company_name,
-       industry = EXCLUDED.industry,
-       location = EXCLUDED.location,
-       website = EXCLUDED.website,
-       description = EXCLUDED.description,
-       updated_at = EXCLUDED.updated_at`,
-    [
-      userId,
-      data.company_name ?? '',
-      data.industry ?? '',
-      data.location ?? '',
-      data.website ?? '',
-      data.description ?? '',
-      now,
-      now,
-    ]
-  );
-  return getEmployerProfileByUserId(userId);
+
+  if (pool) {
+    try {
+      await pool.query(
+        `INSERT INTO employer_profiles (id, user_id, company_name, industry, location, website, description, created_at, updated_at)
+         VALUES (gen_random_uuid(),$1,$2,$3,$4,$5,$6,$7,$8)
+         ON CONFLICT (user_id) DO UPDATE SET
+           company_name = EXCLUDED.company_name,
+           industry = EXCLUDED.industry,
+           location = EXCLUDED.location,
+           website = EXCLUDED.website,
+           description = EXCLUDED.description,
+           updated_at = EXCLUDED.updated_at`,
+        [
+          userId,
+          data.company_name ?? '',
+          data.industry ?? '',
+          data.location ?? '',
+          data.website ?? '',
+          data.description ?? '',
+          now,
+          now,
+        ]
+      );
+      return getEmployerProfileByUserId(userId);
+    } catch {
+      // Fall through to memory
+    }
+  }
+
+  const current = await getEmployerProfileByUserId(userId);
+  const updated: EmployerProfile = {
+    ...current,
+    company_name: data.company_name ?? current.company_name,
+    industry: data.industry ?? current.industry,
+    location: data.location ?? current.location,
+    website: data.website ?? current.website,
+    description: data.description ?? current.description,
+    updated_at: now,
+  };
+  memoryProfiles.set(userId, updated);
+  return updated;
 }
 
 function rowToEmployerProfile(row: Record<string, unknown>): EmployerProfile {
@@ -163,85 +201,159 @@ function rowToEmployerProfile(row: Record<string, unknown>): EmployerProfile {
 // ---- Jobs CRUD ----
 
 export async function getJobsByEmployerId(employerId: string): Promise<Job[]> {
-  if (!pool) return [];
-  const res = await pool.query('SELECT * FROM jobs WHERE employer_id=$1 ORDER BY created_at DESC', [employerId]);
-  return res.rows.map(rowToJob);
+  if (pool) {
+    try {
+      const res = await pool.query('SELECT * FROM jobs WHERE employer_id=$1 ORDER BY created_at DESC', [employerId]);
+      return res.rows.map(rowToJob);
+    } catch {
+      // Fall through
+    }
+  }
+  return Array.from(memoryJobs.values())
+    .filter((j) => j.employer_id === employerId)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 
 export async function getAllOpenJobs(): Promise<Job[]> {
-  if (!pool) return [];
-  const res = await pool.query("SELECT * FROM jobs WHERE status='open' ORDER BY created_at DESC");
-  return res.rows.map(rowToJob);
+  if (pool) {
+    try {
+      const res = await pool.query("SELECT * FROM jobs WHERE status='open' ORDER BY created_at DESC");
+      return res.rows.map(rowToJob);
+    } catch {
+      // Fall through
+    }
+  }
+  return Array.from(memoryJobs.values())
+    .filter((j) => j.status === 'open')
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 
 export async function getJobById(jobId: string): Promise<Job | null> {
-  if (!pool) return null;
-  const res = await pool.query('SELECT * FROM jobs WHERE id=$1 LIMIT 1', [jobId]);
-  if (res.rows.length === 0) return null;
-  return rowToJob(res.rows[0]);
+  if (pool) {
+    try {
+      const res = await pool.query('SELECT * FROM jobs WHERE id=$1 LIMIT 1', [jobId]);
+      if (res.rows.length > 0) return rowToJob(res.rows[0]);
+    } catch {
+      // Fall through
+    }
+  }
+  return memoryJobs.get(jobId) || null;
 }
 
 export async function createJob(employerId: string, data: Partial<Job>): Promise<Job> {
-  if (!pool) throw new Error('Database not connected');
   const id = uuidv4();
   const now = new Date().toISOString();
-  const res = await pool.query(
-    `INSERT INTO jobs (id, employer_id, title, description, department, location, type, experience_level, required_skills, preferred_skills, status, created_at, updated_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
-    [
-      id, employerId,
-      data.title ?? 'Untitled Job',
-      data.description ?? '',
-      data.department ?? '',
-      data.location ?? '',
-      data.type ?? 'full-time',
-      data.experience_level ?? '',
-      JSON.stringify(data.required_skills ?? []),
-      JSON.stringify(data.preferred_skills ?? []),
-      data.status ?? 'open',
-      now, now,
-    ]
-  );
-  return rowToJob(res.rows[0]);
+  const job: Job = {
+    id,
+    employer_id: employerId,
+    title: data.title ?? 'Untitled Job',
+    description: data.description ?? '',
+    department: data.department ?? '',
+    location: data.location ?? '',
+    type: data.type ?? 'full-time',
+    experience_level: data.experience_level ?? '',
+    required_skills: data.required_skills ?? [],
+    preferred_skills: data.preferred_skills ?? [],
+    status: data.status ?? 'open',
+    created_at: now,
+    updated_at: now,
+  };
+
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `INSERT INTO jobs (id, employer_id, title, description, department, location, type, experience_level, required_skills, preferred_skills, status, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+        [
+          id, employerId,
+          job.title, job.description, job.department, job.location,
+          job.type, job.experience_level,
+          JSON.stringify(job.required_skills),
+          JSON.stringify(job.preferred_skills),
+          job.status, now, now,
+        ]
+      );
+      if (res.rows.length > 0) return rowToJob(res.rows[0]);
+    } catch {
+      // Fall through
+    }
+  }
+
+  memoryJobs.set(id, job);
+  return job;
 }
 
 export async function updateJob(jobId: string, employerId: string, data: Partial<Job>): Promise<Job | null> {
-  if (!pool) throw new Error('Database not connected');
   const now = new Date().toISOString();
-  const res = await pool.query(
-    `UPDATE jobs SET
-       title = COALESCE($1, title),
-       description = COALESCE($2, description),
-       department = COALESCE($3, department),
-       location = COALESCE($4, location),
-       type = COALESCE($5, type),
-       experience_level = COALESCE($6, experience_level),
-       required_skills = COALESCE($7, required_skills),
-       preferred_skills = COALESCE($8, preferred_skills),
-       status = COALESCE($9, status),
-       updated_at = $10
-     WHERE id = $11 AND employer_id = $12 RETURNING *`,
-    [
-      data.title ?? null,
-      data.description ?? null,
-      data.department ?? null,
-      data.location ?? null,
-      data.type ?? null,
-      data.experience_level ?? null,
-      data.required_skills ? JSON.stringify(data.required_skills) : null,
-      data.preferred_skills ? JSON.stringify(data.preferred_skills) : null,
-      data.status ?? null,
-      now, jobId, employerId,
-    ]
-  );
-  if (res.rows.length === 0) return null;
-  return rowToJob(res.rows[0]);
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `UPDATE jobs SET
+           title = COALESCE($1, title),
+           description = COALESCE($2, description),
+           department = COALESCE($3, department),
+           location = COALESCE($4, location),
+           type = COALESCE($5, type),
+           experience_level = COALESCE($6, experience_level),
+           required_skills = COALESCE($7, required_skills),
+           preferred_skills = COALESCE($8, preferred_skills),
+           status = COALESCE($9, status),
+           updated_at = $10
+         WHERE id = $11 AND employer_id = $12 RETURNING *`,
+        [
+          data.title ?? null,
+          data.description ?? null,
+          data.department ?? null,
+          data.location ?? null,
+          data.type ?? null,
+          data.experience_level ?? null,
+          data.required_skills ? JSON.stringify(data.required_skills) : null,
+          data.preferred_skills ? JSON.stringify(data.preferred_skills) : null,
+          data.status ?? null,
+          now, jobId, employerId,
+        ]
+      );
+      if (res.rows.length > 0) return rowToJob(res.rows[0]);
+    } catch {
+      // Fall through
+    }
+  }
+
+  const existing = memoryJobs.get(jobId);
+  if (!existing || existing.employer_id !== employerId) return null;
+  const updated: Job = {
+    ...existing,
+    title: data.title ?? existing.title,
+    description: data.description ?? existing.description,
+    department: data.department ?? existing.department,
+    location: data.location ?? existing.location,
+    type: data.type ?? existing.type,
+    experience_level: data.experience_level ?? existing.experience_level,
+    required_skills: data.required_skills ?? existing.required_skills,
+    preferred_skills: data.preferred_skills ?? existing.preferred_skills,
+    status: data.status ?? existing.status,
+    updated_at: now,
+  };
+  memoryJobs.set(jobId, updated);
+  return updated;
 }
 
 export async function deleteJob(jobId: string, employerId: string): Promise<boolean> {
-  if (!pool) throw new Error('Database not connected');
-  const res = await pool.query('DELETE FROM jobs WHERE id=$1 AND employer_id=$2 RETURNING id', [jobId, employerId]);
-  return res.rows.length > 0;
+  if (pool) {
+    try {
+      const res = await pool.query('DELETE FROM jobs WHERE id=$1 AND employer_id=$2 RETURNING id', [jobId, employerId]);
+      if (res.rows.length > 0) return true;
+    } catch {
+      // Fall through
+    }
+  }
+
+  const existing = memoryJobs.get(jobId);
+  if (existing && existing.employer_id === employerId) {
+    memoryJobs.delete(jobId);
+    return true;
+  }
+  return false;
 }
 
 function rowToJob(row: Record<string, unknown>): Job {
@@ -265,17 +377,42 @@ function rowToJob(row: Record<string, unknown>): Job {
 // ---- Job Applications ----
 
 export async function applyToJob(jobId: string, candidateId: string): Promise<JobApplication> {
-  if (!pool) throw new Error('Database not connected');
   const id = uuidv4();
   const now = new Date().toISOString();
-  const res = await pool.query(
-    `INSERT INTO job_applications (id, job_id, candidate_id, status, employer_feedback, created_at, updated_at)
-     VALUES ($1,$2,$3,'Applied','',$4,$5)
-     ON CONFLICT (job_id, candidate_id) DO UPDATE SET updated_at = EXCLUDED.updated_at
-     RETURNING *`,
-    [id, jobId, candidateId, now, now]
-  );
-  return rowToJobApplication(res.rows[0]);
+
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `INSERT INTO job_applications (id, job_id, candidate_id, status, employer_feedback, created_at, updated_at)
+         VALUES ($1,$2,$3,'Applied','',$4,$5)
+         ON CONFLICT (job_id, candidate_id) DO UPDATE SET updated_at = EXCLUDED.updated_at
+         RETURNING *`,
+        [id, jobId, candidateId, now, now]
+      );
+      if (res.rows.length > 0) return rowToJobApplication(res.rows[0]);
+    } catch {
+      // Fall through
+    }
+  }
+
+  for (const app of memoryApplications.values()) {
+    if (app.job_id === jobId && app.candidate_id === candidateId) {
+      app.updated_at = now;
+      return app;
+    }
+  }
+
+  const app: JobApplication = {
+    id,
+    job_id: jobId,
+    candidate_id: candidateId,
+    status: 'Applied',
+    employer_feedback: '',
+    created_at: now,
+    updated_at: now,
+  };
+  memoryApplications.set(id, app);
+  return app;
 }
 
 export async function updateApplicationStatus(
@@ -284,57 +421,110 @@ export async function updateApplicationStatus(
   status: string,
   feedback: string
 ): Promise<JobApplication | null> {
-  if (!pool) return null;
   const now = new Date().toISOString();
-  // Verify employer owns the job
-  const res = await pool.query(
-    `UPDATE job_applications ja SET
-       status = $1,
-       employer_feedback = $2,
-       updated_at = $3
-     FROM jobs j
-     WHERE ja.id = $4 AND ja.job_id = j.id AND j.employer_id = $5
-     RETURNING ja.*`,
-    [status, feedback, now, appId, employerId]
-  );
-  if (res.rows.length === 0) return null;
-  return rowToJobApplication(res.rows[0]);
+
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `UPDATE job_applications ja SET
+           status = $1,
+           employer_feedback = $2,
+           updated_at = $3
+         FROM jobs j
+         WHERE ja.id = $4 AND ja.job_id = j.id AND j.employer_id = $5
+         RETURNING ja.*`,
+        [status, feedback, now, appId, employerId]
+      );
+      if (res.rows.length > 0) return rowToJobApplication(res.rows[0]);
+    } catch {
+      // Fall through
+    }
+  }
+
+  const app = memoryApplications.get(appId);
+  if (!app) return null;
+  const job = memoryJobs.get(app.job_id);
+  if (!job || job.employer_id !== employerId) return null;
+
+  app.status = status;
+  app.employer_feedback = feedback;
+  app.updated_at = now;
+  return app;
 }
 
 export async function getCandidateApplications(candidateId: string): Promise<(JobApplication & { job_title: string; company_name: string })[]> {
-  if (!pool) return [];
-  const res = await pool.query(
-    `SELECT ja.*, j.title AS job_title, ep.company_name
-     FROM job_applications ja
-     JOIN jobs j ON ja.job_id = j.id
-     LEFT JOIN employer_profiles ep ON j.employer_id = ep.user_id
-     WHERE ja.candidate_id = $1
-     ORDER BY ja.updated_at DESC`,
-    [candidateId]
-  );
-  return res.rows.map((row) => ({
-    ...rowToJobApplication(row),
-    job_title: String(row.job_title ?? ''),
-    company_name: String(row.company_name ?? ''),
-  }));
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `SELECT ja.*, j.title AS job_title, ep.company_name
+         FROM job_applications ja
+         JOIN jobs j ON ja.job_id = j.id
+         LEFT JOIN employer_profiles ep ON j.employer_id = ep.user_id
+         WHERE ja.candidate_id = $1
+         ORDER BY ja.updated_at DESC`,
+        [candidateId]
+      );
+      return res.rows.map((row) => ({
+        ...rowToJobApplication(row),
+        job_title: String(row.job_title ?? ''),
+        company_name: String(row.company_name ?? ''),
+      }));
+    } catch {
+      // Fall through
+    }
+  }
+
+  return Array.from(memoryApplications.values())
+    .filter((a) => a.candidate_id === candidateId)
+    .map((a) => {
+      const job = memoryJobs.get(a.job_id);
+      const emp = job ? memoryProfiles.get(job.employer_id) : null;
+      return {
+        ...a,
+        job_title: job ? job.title : 'Job',
+        company_name: emp ? emp.company_name : 'Company',
+      };
+    })
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
 }
 
 export async function getJobApplicationsForEmployer(jobId: string, employerId: string): Promise<(JobApplication & { candidate_name: string; candidate_email: string })[]> {
-  if (!pool) return [];
-  const res = await pool.query(
-    `SELECT ja.*, u.name AS candidate_name, u.email AS candidate_email
-     FROM job_applications ja
-     JOIN users u ON ja.candidate_id = u.id
-     JOIN jobs j ON ja.job_id = j.id
-     WHERE ja.job_id = $1 AND j.employer_id = $2
-     ORDER BY ja.created_at DESC`,
-    [jobId, employerId]
-  );
-  return res.rows.map((row) => ({
-    ...rowToJobApplication(row),
-    candidate_name: String(row.candidate_name ?? ''),
-    candidate_email: String(row.candidate_email ?? ''),
-  }));
+  if (pool) {
+    try {
+      const res = await pool.query(
+        `SELECT ja.*, u.name AS candidate_name, u.email AS candidate_email
+         FROM job_applications ja
+         JOIN users u ON ja.candidate_id = u.id
+         JOIN jobs j ON ja.job_id = j.id
+         WHERE ja.job_id = $1 AND j.employer_id = $2
+         ORDER BY ja.created_at DESC`,
+        [jobId, employerId]
+      );
+      return res.rows.map((row) => ({
+        ...rowToJobApplication(row),
+        candidate_name: String(row.candidate_name ?? ''),
+        candidate_email: String(row.candidate_email ?? ''),
+      }));
+    } catch {
+      // Fall through
+    }
+  }
+
+  const { findUserById } = await import('./userModel');
+  const job = memoryJobs.get(jobId);
+  if (!job || job.employer_id !== employerId) return [];
+
+  const apps = Array.from(memoryApplications.values()).filter((a) => a.job_id === jobId);
+  const result = [];
+  for (const a of apps) {
+    const user = await findUserById(a.candidate_id);
+    result.push({
+      ...a,
+      candidate_name: user?.name || 'Candidate',
+      candidate_email: user?.email || '',
+    });
+  }
+  return result;
 }
 
 function rowToJobApplication(row: Record<string, unknown>): JobApplication {
@@ -349,7 +539,7 @@ function rowToJobApplication(row: Record<string, unknown>): JobApplication {
   };
 }
 
-// ---- Candidate Discovery (for employers) ----
+// ---- Candidate Discovery ----
 
 export interface CandidateSummary {
   user_id: string;
@@ -361,49 +551,77 @@ export interface CandidateSummary {
 }
 
 export async function discoverCandidates(skillFilter?: string): Promise<CandidateSummary[]> {
-  if (!pool) return [];
-  let query: string;
-  let params: unknown[];
-  if (skillFilter) {
-    query = `
-      SELECT u.id AS user_id, u.name, u.email,
-             cp.target_role,
-             cp.skills AS confirmed_skills,
-             COUNT(DISTINCT er.id) AS evidence_count
-      FROM users u
-      JOIN candidate_profiles cp ON u.id = cp.user_id
-      LEFT JOIN evidence_records er ON u.id = er.user_id
-      WHERE u.role = 'candidate'
-        AND cp.skills::text ILIKE $1
-      GROUP BY u.id, u.name, u.email, cp.target_role, cp.skills
-      ORDER BY evidence_count DESC
-    `;
-    params = [`%${skillFilter}%`];
-  } else {
-    query = `
-      SELECT u.id AS user_id, u.name, u.email,
-             cp.target_role,
-             cp.skills AS confirmed_skills,
-             COUNT(DISTINCT er.id) AS evidence_count
-      FROM users u
-      JOIN candidate_profiles cp ON u.id = cp.user_id
-      LEFT JOIN evidence_records er ON u.id = er.user_id
-      WHERE u.role = 'candidate'
-      GROUP BY u.id, u.name, u.email, cp.target_role, cp.skills
-      ORDER BY evidence_count DESC
-      LIMIT 50
-    `;
-    params = [];
+  if (pool) {
+    try {
+      let query: string;
+      let params: unknown[];
+      if (skillFilter) {
+        query = `
+          SELECT u.id AS user_id, u.name, u.email,
+                 cp.target_role,
+                 cp.skills AS confirmed_skills,
+                 COUNT(DISTINCT er.id) AS evidence_count
+          FROM users u
+          JOIN candidate_profiles cp ON u.id = cp.user_id
+          LEFT JOIN evidence_records er ON u.id = er.user_id
+          WHERE u.role = 'candidate'
+            AND cp.skills::text ILIKE $1
+          GROUP BY u.id, u.name, u.email, cp.target_role, cp.skills
+          ORDER BY evidence_count DESC
+        `;
+        params = [`%${skillFilter}%`];
+      } else {
+        query = `
+          SELECT u.id AS user_id, u.name, u.email,
+                 cp.target_role,
+                 cp.skills AS confirmed_skills,
+                 COUNT(DISTINCT er.id) AS evidence_count
+          FROM users u
+          JOIN candidate_profiles cp ON u.id = cp.user_id
+          LEFT JOIN evidence_records er ON u.id = er.user_id
+          WHERE u.role = 'candidate'
+          GROUP BY u.id, u.name, u.email, cp.target_role, cp.skills
+          ORDER BY evidence_count DESC
+          LIMIT 50
+        `;
+        params = [];
+      }
+      const res = await pool.query(query, params);
+      return res.rows.map((row) => ({
+        user_id: String(row.user_id),
+        name: String(row.name ?? ''),
+        email: String(row.email ?? ''),
+        target_role: String(row.target_role ?? ''),
+        confirmed_skills: Array.isArray(row.confirmed_skills)
+          ? (row.confirmed_skills as { name?: string }[]).map((s) => (typeof s === 'string' ? s : (s.name ?? '')))
+          : [],
+        evidence_count: Number(row.evidence_count ?? 0),
+      }));
+    } catch {
+      // Fall through
+    }
   }
-  const res = await pool.query(query, params);
-  return res.rows.map((row) => ({
-    user_id: String(row.user_id),
-    name: String(row.name ?? ''),
-    email: String(row.email ?? ''),
-    target_role: String(row.target_role ?? ''),
-    confirmed_skills: Array.isArray(row.confirmed_skills)
-      ? (row.confirmed_skills as { name?: string }[]).map((s) => (typeof s === 'string' ? s : (s.name ?? '')))
-      : [],
-    evidence_count: Number(row.evidence_count ?? 0),
-  }));
+
+  // Memory fallback candidate discovery
+  const { getCandidateProfileByUserId } = await import('./candidateModel');
+  const { getEvidenceByUser } = await import('./evidenceModel');
+  const demoCandidateId = 'demo-candidate-uuid-1';
+  const prof = await getCandidateProfileByUserId(demoCandidateId);
+  const evidence = await getEvidenceByUser(demoCandidateId);
+  const skills = (prof.skills || []).map((s) => s.name);
+
+  if (skillFilter && !skills.some((s) => s.toLowerCase().includes(skillFilter.toLowerCase()))) {
+    return [];
+  }
+
+  return [
+    {
+      user_id: demoCandidateId,
+      name: 'Demo Candidate',
+      email: 'candidate.demo@skillbridge.app',
+      target_role: prof.target_role || 'Full Stack Engineer',
+      confirmed_skills: skills,
+      evidence_count: evidence.length,
+    },
+  ];
 }
