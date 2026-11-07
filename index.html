@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillBridge – AI-Assisted Career Re-Entry Platform</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- TOP HEADER / BANNER -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+    <div class="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo & Demo Badge -->
+      <div class="flex items-center gap-3">
+        <button id="mobile-nav-toggle" class="lg:hidden p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100">
+          <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+
+        <div class="flex items-center gap-2.5 cursor-pointer" onclick="window.app.switchTab('dashboard')">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-slate-950 via-indigo-900 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+            <i data-lucide="sparkles" class="w-5 h-5 text-indigo-300"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-lg font-black tracking-tight text-slate-900">SkillBridge</span>
+              <span class="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse"></span> Demo Prototype
+              </span>
+            </div>
+            <p class="text-[10px] text-slate-400 font-medium hidden sm:block">AI-Assisted Career Re-Entry Platform</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center Philosophy Banner (College Presentation Highlight) -->
+      <div class="hidden xl:flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-200/80 rounded-full text-xs text-slate-600">
+        <span class="font-bold text-indigo-700">Core Principle:</span>
+        <span>"Don't hide the career gap. Fill the evidence gap."</span>
+      </div>
+
+      <!-- Right Profile Pill & Reset -->
+      <div class="flex items-center gap-3">
+        <button id="btn-reset-data" title="Reset Prototype Data to Initial State" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+          <span>Reset Demo</span>
+        </button>
+
+        <!-- Candidate Profile Pill -->
+        <div class="flex items-center gap-3 pl-3 border-l border-slate-200">
+          <img id="header-user-avatar" src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=256" alt="Priya Sharma" class="w-9 h-9 rounded-full object-cover ring-2 ring-indigo-500/30">
+          <div class="hidden sm:block text-left">
+            <div id="header-user-name" class="text-xs font-bold text-slate-900 leading-tight">Priya Sharma</div>
+            <div id="header-user-role" class="text-[10px] text-slate-500 leading-tight">Java Backend Developer</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER WITH SIDEBAR -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- DESKTOP SIDEBAR -->
+    <aside class="hidden lg:flex w-64 flex-col bg-white border-r border-slate-200 shrink-0">
+      <div class="p-4 flex-1 overflow-y-auto space-y-1">
+
+        <div class="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Main Portal</div>
+        
+        <button class="nav-link w-full text-left active" data-tab="dashboard">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+          <span>Dashboard</span>
+        </button>
+
+        <button class="nav-link w-full text-left" data-tab="resume">
+          <i data-lucide="file-search" class="w-4 h-4"></i>
+          <span>Resume & AI Skills</span>
+        </button>
+
+        <button class="nav-link w-full text-left" data-tab="passport">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>
+          <span>Skill Freshness Passport</span>
+        </button>
+
+        <div class="pt-3 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Practical Evidence</div>
+
+        <button class="nav-link w-full text-left" data-tab="projects">
+          <i data-lucide="briefcase" class="w-4 h-4"></i>
+          <span>Company Projects</span>
+        </button>
+
+        <button class="nav-link w-full text-left" data-tab="fellowships">
+          <i data-lucide="award" class="w-4 h-4"></i>
+          <span>Fellowships & Returnships</span>
+        </button>
+
+        <button class="nav-link w-full text-left" data-tab="mentors">
+          <i data-lucide="users" class="w-4 h-4"></i>
+          <span>Mentor Sessions</span>
+        </button>
+
+        <div class="pt-3 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Re-Entry Preparation</div>
+
+        <button class="nav-link w-full text-left" data-tab="gap-assistant">
+          <i data-lucide="file-check-2" class="w-4 h-4"></i>
+          <span>Gap Documentation</span>
+        </button>
+
+        <button class="nav-link w-full text-left" data-tab="roadmap">
+          <i data-lucide="map" class="w-4 h-4"></i>
+          <span>AI Career Roadmap</span>
+        </button>
+
+        <button class="nav-link w-full text-left" data-tab="interview">
+          <i data-lucide="messages-square" class="w-4 h-4"></i>
+          <span>Interview Preparation</span>
+        </button>
+
+        <button class="nav-link w-full text-left" data-tab="applications">
+          <i data-lucide="check-square" class="w-4 h-4"></i>
+          <span>Application Tracker</span>
+        </button>
+
+      </div>
+
+      <!-- Sidebar Footer Badge -->
+      <div class="p-4 border-t border-slate-200 bg-slate-50/50">
+        <div class="p-3 bg-white rounded-xl border border-slate-200 text-xs">
+          <div class="flex items-center gap-2 text-indigo-700 font-bold mb-1">
+            <i data-lucide="info" class="w-4 h-4"></i>
+            <span>College Demo</span>
+          </div>
+          <p class="text-[11px] text-slate-500 leading-snug">Candidate-Side Evidence-Based Prototype for Oct 31 Presentation.</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MOBILE SIDEBAR OVERLAY -->
+    <div id="mobile-sidebar" class="hidden fixed inset-0 z-50 flex">
+      <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs" id="close-mobile-sidebar"></div>
+      <div class="relative w-72 max-w-[85%] bg-white h-full shadow-2xl flex flex-col p-4 z-10">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-200 mb-2">
+          <span class="font-extrabold text-slate-900">SkillBridge Menu</span>
+          <button class="p-2 text-slate-500 hover:text-slate-900" onclick="document.getElementById('mobile-sidebar').classList.add('hidden')">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto space-y-1">
+          <button class="nav-link w-full text-left active" data-tab="dashboard"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard</button>
+          <button class="nav-link w-full text-left" data-tab="resume"><i data-lucide="file-search" class="w-4 h-4"></i> Resume & AI Skills</button>
+          <button class="nav-link w-full text-left" data-tab="passport"><i data-lucide="shield-check" class="w-4 h-4"></i> Skill Freshness Passport</button>
+          <button class="nav-link w-full text-left" data-tab="projects"><i data-lucide="briefcase" class="w-4 h-4"></i> Company Projects</button>
+          <button class="nav-link w-full text-left" data-tab="fellowships"><i data-lucide="award" class="w-4 h-4"></i> Fellowships & Returnships</button>
+          <button class="nav-link w-full text-left" data-tab="mentors"><i data-lucide="users" class="w-4 h-4"></i> Mentor Sessions</button>
+          <button class="nav-link w-full text-left" data-tab="gap-assistant"><i data-lucide="file-check-2" class="w-4 h-4"></i> Gap Documentation</button>
+          <button class="nav-link w-full text-left" data-tab="roadmap"><i data-lucide="map" class="w-4 h-4"></i> AI Career Roadmap</button>
+          <button class="nav-link w-full text-left" data-tab="interview"><i data-lucide="messages-square" class="w-4 h-4"></i> Interview Preparation</button>
+          <button class="nav-link w-full text-left" data-tab="applications"><i data-lucide="check-square" class="w-4 h-4"></i> Application Tracker</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT VIEWPORT -->
+    <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-slate-50">
+
+      <!-- ================= SECTION 1: DASHBOARD ================= -->
+      <div id="tab-dashboard" class="tab-content space-y-6">
+        
+        <!-- Welcome Banner -->
+        <div class="bg-gradient-navy-purple rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden shadow-lg">
+          <div class="absolute -right-8 -bottom-12 w-64 h-64 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
+          
+          <div class="max-w-2xl relative z-10">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 backdrop-blur-md text-indigo-200 mb-3 border border-white/10">
+              <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-300"></i> Career Restart Pipeline Active
+            </span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              Welcome back, <span id="dash-welcome-name">Priya Sharma</span> 👋
+            </h1>
+            <p class="text-indigo-100 text-sm mt-2 leading-relaxed">
+              "Don't hide your career break. Build credible, verifiable evidence of what you can do today." You have completed <strong>68%</strong> of your career restart roadmap.
+            </p>
+
+            <div class="mt-5 flex flex-wrap gap-2.5">
+              <button onclick="window.app.switchTab('passport')" class="px-4 py-2 text-xs font-bold bg-indigo-500 hover:bg-indigo-400 text-white rounded-xl shadow transition-colors flex items-center gap-1.5">
+                <i data-lucide="shield-check" class="w-4 h-4"></i> View Skill Passport
+              </button>
+              <button onclick="window.app.switchTab('projects')" class="px-4 py-2 text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl transition-colors flex items-center gap-1.5">
+                <i data-lucide="code-2" class="w-4 h-4"></i> Continue Project
+              </button>
+              <button onclick="window.app.switchTab('mentors')" class="px-4 py-2 text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl transition-colors flex items-center gap-1.5">
+                <i data-lucide="calendar" class="w-4 h-4"></i> Book Mentor
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metric KPI Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="saas-card p-5">
+            <div class="flex items-center justify-between text-slate-400 mb-2">
+              <span class="text-xs font-semibold uppercase tracking-wider">Verified Skills</span>
+              <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><i data-lucide="check-circle" class="w-4 h-4"></i></div>
+            </div>
+            <div id="stat-verified-skills" class="text-2xl font-black text-slate-900">3 / 6</div>
+            <span class="text-[11px] text-emerald-600 font-semibold mt-1 inline-block">Java & SQL Benchmarked</span>
+          </div>
+
+          <div class="saas-card p-5">
+            <div class="flex items-center justify-between text-slate-400 mb-2">
+              <span class="text-xs font-semibold uppercase tracking-wider">Active Projects</span>
+              <div class="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><i data-lucide="briefcase" class="w-4 h-4"></i></div>
+            </div>
+            <div id="stat-active-projects" class="text-2xl font-black text-slate-900">1</div>
+            <span class="text-[11px] text-indigo-600 font-semibold mt-1 inline-block">Order REST API (70%)</span>
+          </div>
+
+          <div class="saas-card p-5">
+            <div class="flex items-center justify-between text-slate-400 mb-2">
+              <span class="text-xs font-semibold uppercase tracking-wider">Restart Readiness</span>
+              <div class="p-2 bg-purple-50 text-purple-600 rounded-lg"><i data-lucide="trending-up" class="w-4 h-4"></i></div>
+            </div>
+            <div id="stat-readiness-percent" class="text-2xl font-black text-slate-900">68%</div>
+            <span class="text-[11px] text-purple-600 font-semibold mt-1 inline-block">On Track for Q1 2027</span>
+          </div>
+
+          <div class="saas-card p-5">
+            <div class="flex items-center justify-between text-slate-400 mb-2">
+              <span class="text-xs font-semibold uppercase tracking-wider">Active Applications</span>
+              <div class="p-2 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="send" class="w-4 h-4"></i></div>
+            </div>
+            <div id="stat-active-apps" class="text-2xl font-black text-slate-900">5</div>
+            <span class="text-[11px] text-blue-600 font-semibold mt-1 inline-block">1 Interview Scheduled</span>
+          </div>
+        </div>
+
+        <!-- Charts & Activity Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Skill Radar Chart (Demonstrated vs Required) -->
+          <div class="saas-card p-6 lg:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="font-bold text-slate-900 text-sm">Evidence vs Target Role Requirements</h3>
+                <p class="text-xs text-slate-500">Current demonstrated evidence benchmarked against Senior Java Backend standards</p>
+              </div>
+              <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-slate-100 text-slate-700">Live Calibration</span>
+            </div>
+            <div class="h-64 relative">
+              <canvas id="chart-skill-radar"></canvas>
+            </div>
+          </div>
+
+          <!-- Recent Activity & Recommended Opps -->
+          <div class="space-y-6">
+            <div class="saas-card p-5">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-bold text-slate-900 text-sm">Recent Activities</h3>
+                <span class="text-[10px] text-indigo-600 font-bold">Auto-Logged</span>
+              </div>
+              <div id="dash-activities-list" class="space-y-2">
+                <!-- Injected via app.js -->
+              </div>
+            </div>
+
+            <div class="saas-card p-5">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-bold text-slate-900 text-sm">Top Returnships</h3>
+                <button onclick="window.app.switchTab('fellowships')" class="text-[11px] font-bold text-indigo-600 hover:text-indigo-800">Browse All</button>
+              </div>
+              <div id="dash-recommended-opps" class="space-y-2.5">
+                <!-- Injected via app.js -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Evidence Breakdown Bar Chart -->
+        <div class="saas-card p-6">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h3 class="font-bold text-slate-900 text-sm">Objective Assessment Benchmark Scores</h3>
+              <p class="text-xs text-slate-500">Deterministic code test suites and query benchmarks passed on SkillBridge</p>
+            </div>
+            <button onclick="window.app.switchTab('passport')" class="text-xs font-semibold text-indigo-600 hover:underline">View Verified Hashes &rarr;</button>
+          </div>
+          <div class="h-52 relative">
+            <canvas id="chart-evidence-bar"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= SECTION 2: RESUME & AI SKILL ANALYSIS ================= -->
+      <div id="tab-resume" class="tab-content hidden space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Resume & AI Skill-Gap Analysis</h2>
+            <p class="text-xs text-slate-500">Extract historical skills, quantify career hiatus, and bridge gaps for target role</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs font-semibold text-slate-700">Target Role:</label>
+            <select id="select-target-role" class="text-xs font-bold px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="Java Backend Developer">Java Backend Developer (MVP Role)</option>
+              <option value="Full Stack Java & React Engineer">Full Stack Java & React Engineer</option>
+              <option value="Cloud Backend Specialist">Cloud Backend Specialist</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Upload & Extracted Header -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <!-- Resume Upload Box -->
+          <div class="saas-card p-5 md:col-span-1 flex flex-col justify-between">
+            <div>
+              <h3 class="font-bold text-slate-900 text-sm mb-1">Resume File</h3>
+              <p class="text-xs text-slate-500 mb-3">Upload candidate resume (PDF or DOCX)</p>
+              
+              <div id="resume-file-info" class="mb-4">
+                <!-- Dynamic File Pill -->
+              </div>
+
+              <!-- Upload Drag & Drop Trigger -->
+              <label class="border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer bg-slate-50 hover:bg-indigo-50/30 transition-all text-center">
+                <i data-lucide="upload-cloud" class="w-8 h-8 text-indigo-600 mb-2"></i>
+                <span class="text-xs font-bold text-slate-800">Select PDF Resume</span>
+                <span class="text-[11px] text-slate-500 mt-0.5">or drop sample PDF here</span>
+                <input type="file" id="resume-file-upload" accept=".pdf,.doc,.docx" class="hidden">
+              </label>
+            </div>
+
+            <button onclick="window.app.simulateResumeParsing('Priya_Sharma_Resume.pdf')" class="w-full mt-4 py-2 text-xs font-bold bg-slate-900 hover:bg-indigo-600 text-white rounded-lg transition-colors">
+              Re-Run AI Skill Extraction
+            </button>
+          </div>
+
+          <!-- AI Extracted Profile Summary -->
+          <div class="saas-card p-6 md:col-span-2">
+            <div class="flex items-center justify-between mb-3">
+              <span class="px-2.5 py-0.5 text-xs font-bold rounded bg-indigo-50 text-indigo-700">AI Profile Synthesis</span>
+              <span class="text-xs text-slate-400">Extracted from Priya_Sharma_Resume.pdf</span>
+            </div>
+            
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-100 mb-4 text-xs">
+              <div>
+                <span class="text-slate-400 block text-[10px]">HISTORICAL EXP</span>
+                <strong class="text-slate-900 font-bold">4.0 Years</strong>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[10px]">CAREER HIATUS</span>
+                <strong class="text-indigo-900 font-bold">3.0 Years (Documented)</strong>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[10px]">PREVIOUS ROLE</span>
+                <strong class="text-slate-900 font-bold">Software Engineer</strong>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[10px]">CORE DOMAINS</span>
+                <strong class="text-slate-900 font-bold">FinTech & ERP Systems</strong>
+              </div>
+            </div>
+
+            <div class="text-xs text-slate-600 leading-relaxed bg-indigo-50/40 p-3.5 rounded-xl border border-indigo-100">
+              <strong class="text-indigo-950 font-semibold block mb-1">SkillBridge AI Gap Summary:</strong>
+              "Candidate holds strong foundational Java and SQL experience. While historical 4-year experience establishes core engineering fundamentals, the 3-year career break introduces modern ecosystem gaps in Spring Boot 3 auto-configuration and Docker containerization. Current evidence has already refreshed Core Java (18/20 tests passed) and REST APIs."
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Skill Gap Analysis Table -->
+        <div class="saas-card overflow-hidden">
+          <div class="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-slate-900 text-base">Job Requirement vs Candidate Evidence Gap Matrix</h3>
+              <p class="text-xs text-slate-500">Mapping historical credentials against active employer requirements</p>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg">Target: Java Backend Developer</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50/70 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <th class="py-3 px-4">Skill / Competency</th>
+                  <th class="py-3 px-4">Historical Resume</th>
+                  <th class="py-3 px-4">Employer Requirement</th>
+                  <th class="py-3 px-4">Current Evidence Status</th>
+                  <th class="py-3 px-4">Recommended Evidence Action</th>
+                </tr>
+              </thead>
+              <tbody id="gap-analysis-table-body">
+                <!-- Injected via app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= SECTION 3: SKILL FRESHNESS PASSPORT ================= -->
+      <div id="tab-passport" class="tab-content hidden space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-xl font-bold text-slate-900">Skill Freshness Passport</h2>
+              <span class="px-2 py-0.5 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800">Verifiable Evidence</span>
+            </div>
+            <p class="text-xs text-slate-500">Candidate-controlled record proving current job-readiness beyond historical resumes</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <select id="passport-filter" onchange="window.app.renderSkillPassport()" class="text-xs font-semibold px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-800">
+              <option value="all">All Skills (6)</option>
+              <option value="verified">Verified & Demonstrated (4)</option>
+              <option value="refresh">Needs Refresh (1)</option>
+              <option value="developing">Developing (1)</option>
+            </select>
+            <button onclick="window.app.openShareProfileModal()" class="px-3.5 py-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors flex items-center gap-1.5 shadow-xs">
+              <i data-lucide="share-2" class="w-3.5 h-3.5"></i> Share Evidence Profile
+            </button>
+          </div>
+        </div>
+
+        <!-- Evidence Model Explanation Banner (Section 11 in PDF) -->
+        <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex items-center gap-2 text-slate-700">
+            <span class="font-bold text-slate-900">Skill Status Model:</span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold badge-verified">Verified</span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold badge-demonstrated">Demonstrated</span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold badge-refresh">Needs Refresh</span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold badge-developing">Developing</span>
+          </div>
+          <span class="text-slate-500 italic">Candidate controls which skills are visible to employers.</span>
+        </div>
+
+        <!-- Passport Skill Cards Grid -->
+        <div id="passport-skills-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- Injected via app.js -->
+        </div>
+
+      </div>
+
+      <!-- ================= SECTION 4: COMPANY PROJECTS ================= -->
+      <div id="tab-projects" class="tab-content hidden space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Company-Provided Practical Projects</h2>
+            <p class="text-xs text-slate-500">Real-world engineering challenges designed to generate deterministic capability evidence</p>
+          </div>
+          <span class="text-xs font-semibold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-200">
+            Pass deterministic CI test suites to verify skills
+          </span>
+        </div>
+
+        <!-- Projects Grid -->
+        <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Injected via app.js -->
+        </div>
+
+      </div>
+
+      <!-- ================= SECTION 5: FELLOWSHIPS & RETURNSHIPS ================= -->
+      <div id="tab-fellowships" class="tab-content hidden space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Career Re-Entry Fellowships & Returnships</h2>
+            <p class="text-xs text-slate-500">Curated paid transition programs welcoming career returners with structured pathways</p>
+          </div>
+          <span class="text-xs text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-lg">
+            Directly submits your Skill Freshness Passport
+          </span>
+        </div>
+
+        <!-- Fellowships Grid -->
+        <div id="fellowships-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Injected via app.js -->
+        </div>
+
+      </div>
+
+      <!-- ================= SECTION 6: MENTOR SESSIONS ================= -->
+      <div id="tab-mentors" class="tab-content hidden space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">1:1 Career Re-Entry Mentorship</h2>
+            <p class="text-xs text-slate-500">Connect with senior architects and returnee alumni for technical drills and strategy</p>
+          </div>
+        </div>
+
+        <!-- Booked Sessions Section -->
+        <div class="saas-card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-slate-900 text-sm">Your Scheduled Sessions (Priya Sharma)</h3>
+            <span class="text-xs text-indigo-600 font-bold">1 Upcoming</span>
+          </div>
+          <div id="mentor-booked-sessions" class="space-y-3">
+            <!-- Injected via app.js -->
+          </div>
+        </div>
+
+        <!-- Available Mentors Grid -->
+        <div>
+          <h3 class="font-bold text-slate-900 text-base mb-4">Available Career & Technical Mentors</h3>
+          <div id="mentors-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            <!-- Injected via app.js -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= SECTION 7: GAP DOCUMENTATION ASSISTANT ================= -->
+      <div id="tab-gap-assistant" class="tab-content hidden space-y-6">
+        
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">Career Gap Documentation Assistant</h2>
+          <p class="text-xs text-slate-500">Organize supporting documents and generate honest, confident narratives for interviews</p>
+        </div>
+
+        <!-- Ethical Disclaimer Notice (from Section 14 & 30 of PDF) -->
+        <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3 text-xs text-amber-900">
+          <i data-lucide="shield-alert" class="w-5 h-5 text-amber-600 shrink-0 mt-0.5"></i>
+          <div>
+            <strong class="font-bold block mb-0.5">SkillBridge Platform Ethics & Transparency Notice:</strong>
+            SkillBridge does not claim to issue official legal certificates or assume career hiatuses require an apology. We believe career breaks do not erase experience—they simply require structured evidence of current capability.
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- Document Checklist -->
+          <div class="saas-card p-6">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-bold text-slate-900 text-base">Re-Entry Evidence Checklist</h3>
+              <span id="gap-checklist-percent" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
+                83% Ready
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 mb-4">Track documents that substantiate your historical experience and recent learning</p>
+
+            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-5">
+              <div id="gap-checklist-bar" class="bg-indigo-600 h-full rounded-full transition-all duration-300" style="width: 83%"></div>
+            </div>
+
+            <div id="gap-checklist-container" class="space-y-3">
+              <!-- Injected via app.js -->
+            </div>
+          </div>
+
+          <!-- AI Gap Narrative Generator -->
+          <div class="saas-card p-6 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="font-bold text-slate-900 text-base">AI Career Gap Narrative Generator</h3>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">Candidate Controlled</span>
+              </div>
+              <p class="text-xs text-slate-500 mb-4">Craft a confident explanation tailored for interviews, cover letters, or LinkedIn</p>
+
+              <div class="space-y-3 mb-4">
+                <div>
+                  <label class="text-xs font-semibold text-slate-700 block mb-1">Career Break Reason:</label>
+                  <select id="gap-reason-select" class="w-full text-xs font-medium p-2 bg-slate-50 border border-slate-200 rounded-lg">
+                    <option value="Maternity & Childcare">Maternity & Childcare (Priya's break)</option>
+                    <option value="Family Caregiving Responsibilities">Family Caregiving Responsibilities</option>
+                    <option value="Personal Health & Recovery">Personal Health & Recovery</option>
+                    <option value="Planned Independent Upskilling">Planned Independent Upskilling</option>
+                    <option value="Relocation & Life Transition">Relocation & Life Transition</option>
+                  </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="text-xs font-semibold text-slate-700 block mb-1">Output Format:</label>
+                    <select id="gap-format-select" class="w-full text-xs font-medium p-2 bg-slate-50 border border-slate-200 rounded-lg">
+                      <option value="pitch">60-Sec Interview Answer</option>
+                      <option value="cover">Cover Letter Paragraph</option>
+                      <option value="linkedin">LinkedIn About Section</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="text-xs font-semibold text-slate-700 block mb-1">Tone of Voice:</label>
+                    <select id="gap-tone-select" class="w-full text-xs font-medium p-2 bg-slate-50 border border-slate-200 rounded-lg">
+                      <option value="Confident & Forward-Looking">Confident & Forward-Looking</option>
+                      <option value="Technical & Evidence-Centric">Technical & Evidence-Centric</option>
+                      <option value="Executive & Reflective">Executive & Reflective</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button onclick="window.app.generateCareerGapDraft()" class="w-full py-2.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+                  <i data-lucide="sparkles" class="w-4 h-4"></i> Generate Narrative Draft
+                </button>
+              </div>
+            </div>
+
+            <!-- Output Box -->
+            <div id="gap-generated-output">
+              <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-400">
+                Click "Generate Narrative Draft" to synthesize candidate-controlled pitch.
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ================= SECTION 8: AI CAREER ROADMAP ================= -->
+      <div id="tab-roadmap" class="tab-content hidden space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Personalized AI Career Restart Roadmap</h2>
+            <p class="text-xs text-slate-500">Step-by-step evidence milestones designed for Priya Sharma (Target: Java Backend Developer)</p>
+          </div>
+          <div class="text-right">
+            <span id="roadmap-overall-percent" class="text-sm font-black text-indigo-600">67% Completed</span>
+            <div class="w-32 bg-slate-200 h-2 rounded-full overflow-hidden mt-1">
+              <div id="roadmap-overall-bar" class="bg-indigo-600 h-full rounded-full transition-all duration-300" style="width: 67%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Roadmap Timeline Container -->
+        <div id="roadmap-phases-container" class="max-w-3xl">
+          <!-- Injected via app.js -->
+        </div>
+
+      </div>
+
+      <!-- ================= SECTION 9: INTERVIEW PREPARATION ================= -->
+      <div id="tab-interview" class="tab-content hidden space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Technical & Behavioral Interview Preparation</h2>
+            <p class="text-xs text-slate-500">Practice core Java, SQL, REST APIs and answering career hiatus questions with AI feedback</p>
+          </div>
+          <button onclick="window.app.loadSampleAnswer()" class="px-3.5 py-1.5 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors flex items-center gap-1.5">
+            <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-300"></i> Load Sample Answer (Demo)
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Question Selection & Context -->
+          <div class="saas-card p-5 lg:col-span-1 space-y-4">
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1">Select Question:</label>
+              <select id="interview-question-select" class="w-full text-xs font-semibold p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800">
+                <!-- Injected via app.js -->
+              </select>
+            </div>
+
+            <div class="p-3.5 bg-indigo-50/60 rounded-xl border border-indigo-100 text-xs space-y-1.5">
+              <div class="flex items-center justify-between">
+                <span id="interview-q-category" class="font-bold text-indigo-900">Technical: Java & Spring</span>
+                <span id="interview-q-difficulty" class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-200 text-indigo-800">Advanced</span>
+              </div>
+              <h4 id="interview-q-title" class="font-extrabold text-slate-900 text-sm pt-1"></h4>
+              <p id="interview-q-text" class="text-slate-600 leading-relaxed"></p>
+            </div>
+
+            <div>
+              <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">KEY CRITERIA EVALUATED</span>
+              <ul id="interview-q-criteria" class="text-xs text-slate-600 space-y-1">
+                <!-- Injected via app.js -->
+              </ul>
+            </div>
+          </div>
+
+          <!-- Practice Answer Area -->
+          <div class="saas-card p-6 lg:col-span-2 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="font-bold text-slate-900 text-sm">Your Response</h3>
+                <span class="text-xs text-slate-400">Deterministic scoring & keyword detection</span>
+              </div>
+
+              <textarea id="interview-user-answer" rows="9" placeholder="Type your answer here or click 'Load Sample Answer' for instant demonstration..." class="w-full text-xs font-normal text-slate-800 bg-slate-50 border border-slate-200 rounded-xl p-3.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"></textarea>
+
+              <div class="mt-3 flex items-center justify-between">
+                <span class="text-xs text-slate-500">Evaluates against senior developer technical rubrics</span>
+                <button onclick="window.app.submitInterviewAnswer()" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs transition-colors flex items-center gap-1.5">
+                  <i data-lucide="sparkles" class="w-4 h-4"></i> Evaluate with AI Engine
+                </button>
+              </div>
+            </div>
+
+            <!-- Feedback Result Container -->
+            <div id="interview-feedback-result" class="mt-4 hidden">
+              <!-- Injected via app.js -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ================= SECTION 10: APPLICATION TRACKER ================= -->
+      <div id="tab-applications" class="tab-content hidden space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Career Re-Entry Application Tracker</h2>
+            <p class="text-xs text-slate-500">Track interviews, returnships, and verified evidence profile submissions</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <select id="app-status-filter" onchange="window.app.renderApplications()" class="text-xs font-semibold px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-800">
+              <option value="all">All Applications (5)</option>
+              <option value="interview">Interview (1)</option>
+              <option value="selected">Selected / Offer (1)</option>
+              <option value="assessment pending">Assessment Pending (1)</option>
+              <option value="under review">Under Review (1)</option>
+              <option value="applied">Applied (1)</option>
+            </select>
+            <button onclick="window.app.openAddAppModal()" class="px-3.5 py-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Application
+            </button>
+          </div>
+        </div>
+
+        <!-- Table View -->
+        <div class="saas-card overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50/70 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  <th class="py-3 px-4">Role & Company</th>
+                  <th class="py-3 px-4">Date Applied</th>
+                  <th class="py-3 px-4">Application Status</th>
+                  <th class="py-3 px-4">Evidence Notes</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="applications-table-body">
+                <!-- Injected via app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- 1. RESUME PARSING PROGRESS MODAL -->
+  <div id="modal-parsing" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl text-center space-y-4">
+      <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+        <i data-lucide="cpu" class="w-6 h-6 animate-spin"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-slate-900">SkillBridge AI Engine</h3>
+        <p id="parsing-step-text" class="text-xs text-slate-500 mt-1">Analyzing historical experience & 3-year hiatus context...</p>
+      </div>
+      <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+        <div id="parsing-progress-bar" class="bg-indigo-600 h-full rounded-full transition-all duration-300" style="width: 25%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. SHARE PASSPORT MODAL -->
+  <div id="modal-share-passport" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-start justify-between">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Share Candidate Evidence Profile</h3>
+          <p class="text-xs text-slate-500">Generate a transparent, candidate-controlled evidence link for employers</p>
+        </div>
+        <button onclick="window.app.closeShareProfileModal()" class="text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">PUBLIC EVIDENCE PASSPORT URL</span>
+        <div class="flex items-center gap-2">
+          <input id="passport-share-url" type="text" readonly value="https://skillbridge.io/evidence/priya-sharma-backend-9481" class="text-xs font-mono bg-white border border-slate-200 rounded-lg px-3 py-2 flex-1 text-slate-700">
+          <button onclick="window.app.copyShareLink()" class="px-3 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">
+            Copy
+          </button>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-600 space-y-1">
+        <strong class="text-slate-900 block">Employer View Includes:</strong>
+        <p>✓ 4 Years Previous Java & Relational Database Experience</p>
+        <p>✓ Verified Core Java Benchmark (18/20 Tests Passed)</p>
+        <p>✓ Verified SQL Optimization Benchmark (9/10 Queries Passed)</p>
+        <p>✓ Current REST API Sandbox Evidence</p>
+        <p class="text-indigo-600 font-semibold pt-1">Candidate-controlled: No private personal reasons exposed.</p>
+      </div>
+
+      <div class="pt-2 flex justify-end">
+        <button onclick="window.app.closeShareProfileModal()" class="px-4 py-2 text-xs font-bold bg-slate-900 text-white rounded-lg">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. QUICK ASSESSMENT SIMULATION MODAL -->
+  <div id="modal-quick-assessment" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-start justify-between">
+        <div>
+          <h3 id="modal-assessment-skill-name" class="text-base font-bold text-slate-900">Skill Assessment</h3>
+          <p id="modal-assessment-skill-desc" class="text-xs text-slate-500">Deterministic code test sandbox</p>
+        </div>
+        <button onclick="document.getElementById('modal-quick-assessment').classList.add('hidden')" class="text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-2">
+        <p class="font-semibold text-slate-800">Automated Evaluation Suite Details:</p>
+        <ul class="space-y-1 text-slate-600">
+          <li>• 20 Deterministic Unit Tests (Concurrency, Memory, Edge Cases)</li>
+          <li>• Sandboxed Execution Engine with Zero Hallucination</li>
+          <li>• Verifiable Hash Generated upon completion</li>
+        </ul>
+      </div>
+
+      <div class="flex items-center gap-2 pt-2">
+        <button onclick="document.getElementById('modal-quick-assessment').classList.add('hidden')" class="flex-1 py-2 text-xs font-bold border border-slate-300 rounded-lg text-slate-700">
+          Cancel
+        </button>
+        <button onclick="window.app.submitQuickAssessment()" class="flex-1 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg">
+          Run Test Suite (Simulate 95%)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. PROJECT DETAILS MODAL -->
+  <div id="modal-project-details" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-start justify-between">
+        <div>
+          <h3 id="modal-proj-title" class="text-base font-bold text-slate-900">Project Title</h3>
+          <p id="modal-proj-provider" class="text-xs text-slate-500">Provider & Duration</p>
+        </div>
+        <button onclick="document.getElementById('modal-project-details').classList.add('hidden')" class="text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <p id="modal-proj-desc" class="text-xs text-slate-600 leading-relaxed"></p>
+
+      <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+        <h4 class="text-xs font-bold text-slate-900 mb-2">Employer Evaluation Rubric (Deterministic Test Criteria):</h4>
+        <ul id="modal-proj-rubric" class="text-xs text-slate-600 space-y-1.5"></ul>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+        <span>Template: <strong class="text-slate-700">spring-boot-starter-order-api.zip</strong></span>
+        <button id="modal-proj-action-btn" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">
+          Action
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. FELLOWSHIP DETAILS MODAL -->
+  <div id="modal-fellowship-details" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-start justify-between">
+        <div>
+          <h3 id="modal-fel-title" class="text-base font-bold text-slate-900">Fellowship Title</h3>
+          <p id="modal-fel-badge" class="text-xs text-indigo-600 font-semibold"></p>
+        </div>
+        <button onclick="document.getElementById('modal-fellowship-details').classList.add('hidden')" class="text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <p id="modal-fel-desc" class="text-xs text-slate-600 leading-relaxed"></p>
+
+      <div class="grid grid-cols-3 gap-2 p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs">
+        <div><span class="text-slate-400 block text-[10px]">DURATION</span><strong id="modal-fel-duration" class="text-slate-800"></strong></div>
+        <div><span class="text-slate-400 block text-[10px]">STIPEND</span><strong id="modal-fel-stipend" class="text-slate-800"></strong></div>
+        <div><span class="text-slate-400 block text-[10px]">CONVERSION</span><strong id="modal-fel-conversion" class="text-emerald-700"></strong></div>
+      </div>
+
+      <div class="text-xs text-slate-600 bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
+        <strong class="text-slate-800">Eligibility Criteria:</strong>
+        <p id="modal-fel-eligibility" class="mt-0.5"></p>
+      </div>
+
+      <div class="pt-2 flex justify-end gap-2">
+        <button onclick="document.getElementById('modal-fellowship-details').classList.add('hidden')" class="px-4 py-2 text-xs font-bold border border-slate-300 rounded-lg text-slate-700">Close</button>
+        <button id="modal-fel-apply-btn" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">Apply with Passport</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. MENTOR BOOKING MODAL -->
+  <div id="modal-booking" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-start justify-between">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Book 1:1 Re-Entry Session</h3>
+          <p id="booking-mentor-name" class="text-xs text-indigo-600 font-bold">Mentor Name</p>
+          <p id="booking-mentor-title" class="text-[11px] text-slate-500"></p>
+        </div>
+        <button onclick="document.getElementById('modal-booking').classList.add('hidden')" class="text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1">Session Topic:</label>
+          <select id="booking-topic-select" class="w-full text-xs font-medium p-2 bg-slate-50 border border-slate-200 rounded-lg">
+            <option value="Career Break Narrative & Interview Strategy">Career Break Narrative & Interview Strategy</option>
+            <option value="Java Backend & System Design Mock">Java Backend & System Design Mock</option>
+            <option value="Spring Boot 3 & REST API Architecture Review">Spring Boot 3 & REST API Architecture Review</option>
+            <option value="Salary Negotiation for Returning Professionals">Salary Negotiation for Returning Professionals</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1">Available Slots (Next 7 Days):</label>
+          <div id="booking-slots-container" class="space-y-1.5">
+            <!-- Injected via app.js -->
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1">Candidate Note / Question:</label>
+          <textarea id="booking-notes-input" rows="2" placeholder="e.g. Want feedback on explaining my 3-year childcare hiatus..." class="w-full text-xs p-2 bg-slate-50 border border-slate-200 rounded-lg"></textarea>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 pt-2">
+        <button onclick="document.getElementById('modal-booking').classList.add('hidden')" class="flex-1 py-2 text-xs font-bold border border-slate-300 rounded-lg text-slate-700">Cancel</button>
+        <button onclick="window.app.confirmBooking()" class="flex-1 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">Confirm Booking</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. ADD APPLICATION MODAL -->
+  <div id="modal-add-application" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-start justify-between">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Add New Application</h3>
+          <p class="text-xs text-slate-500">Track a new job opportunity or fellowship</p>
+        </div>
+        <button onclick="document.getElementById('modal-add-application').classList.add('hidden')" class="text-slate-400 hover:text-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1">Company / Organization Name:</label>
+          <input type="text" id="new-app-company" placeholder="e.g. Apex Global Tech" class="w-full text-xs p-2 bg-slate-50 border border-slate-200 rounded-lg">
+        </div>
+
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1">Role Title:</label>
+          <input type="text" id="new-app-role" placeholder="e.g. Java Backend Engineer" class="w-full text-xs p-2 bg-slate-50 border border-slate-200 rounded-lg">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1">Status:</label>
+            <select id="new-app-status" class="w-full text-xs p-2 bg-slate-50 border border-slate-200 rounded-lg">
+              <option value="Applied">Applied</option>
+              <option value="Under Review">Under Review</option>
+              <option value="Assessment Pending">Assessment Pending</option>
+              <option value="Interview">Interview</option>
+              <option value="Selected">Selected</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-700 block mb-1">Location / Mode:</label>
+            <input type="text" id="new-app-location" placeholder="e.g. Remote or Bangalore" class="w-full text-xs p-2 bg-slate-50 border border-slate-200 rounded-lg">
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-bold text-slate-700 block mb-1">Notes / Attached Evidence:</label>
+          <textarea id="new-app-notes" rows="2" placeholder="e.g. Shared Skill Freshness Passport link with recruiter..." class="w-full text-xs p-2 bg-slate-50 border border-slate-200 rounded-lg"></textarea>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 pt-2">
+        <button onclick="document.getElementById('modal-add-application').classList.add('hidden')" class="flex-1 py-2 text-xs font-bold border border-slate-300 rounded-lg text-slate-700">Cancel</button>
+        <button onclick="window.app.saveNewApplication()" class="flex-1 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">Save Record</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATIONS CONTAINER -->
+  <div id="toast-container"></div>
+
+  <!-- Application JS -->
+  <script src="app.js"></script>
+</body>
+</html>
