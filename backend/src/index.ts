@@ -70,11 +70,8 @@ Promise.all([
     console.error('Initialization error:', err);
   });
 
-// Only listen directly when not running in serverless (e.g., local dev)
-if (process.env.VERCEL !== '1' && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
-  app.listen(PORT, () => {
-    console.log(`SkillBridge backend running on port ${PORT}`);
-  });
-}
+app.listen(PORT, () => {
+  console.log(`SkillBridge backend running on port ${PORT}`);
+});
 
 export default app;
