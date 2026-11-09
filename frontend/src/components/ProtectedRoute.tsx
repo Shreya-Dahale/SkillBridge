@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types/auth';
+import AppLayout from './AppLayout';
 
 interface ProtectedRouteProps {
   allowedRoles?: UserRole[];
@@ -12,8 +13,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) 
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontFamily: 'sans-serif' }}>
-        <p>Loading session...</p>
+      <div className="loading-screen">
+        <div className="loading-spinner-ring" />
+        <p className="loading-text">Verifying secure session...</p>
       </div>
     );
   }
@@ -26,7 +28,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) 
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <Outlet />;
+  return (
+    <AppLayout>
+      <Outlet />
+    </AppLayout>
+  );
 };
 
 export default ProtectedRoute;

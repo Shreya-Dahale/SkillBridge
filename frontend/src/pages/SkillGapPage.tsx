@@ -7,8 +7,19 @@ import {
   EvidenceLevel,
   SkillStatus,
   SkillGapAnalysisRecord,
-  SkillGapStatus,
 } from '../types/skills';
+import {
+  Target,
+  Sparkles,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Plus,
+  Trash2,
+  ShieldCheck,
+} from '../components/Icons';
+import StatCard from '../components/StatCard';
+import StatusBadge from '../components/StatusBadge';
 
 const CATEGORIES: { key: SkillCategory; label: string }[] = [
   { key: 'programming_languages', label: 'Programming Languages' },
@@ -40,9 +51,8 @@ Preferred & Bonus Skills:
 - CI/CD automation pipeline experience`;
 
 export const SkillGapPage: React.FC = () => {
-  const { token, logout } = useAuth();
+  const { token } = useAuth();
 
-  // Navigation tab: 'skills' | 'gap_analysis'
   const [activeTab, setActiveTab] = useState<'skills' | 'gap_analysis'>('skills');
 
   // Skills State
@@ -54,7 +64,7 @@ export const SkillGapPage: React.FC = () => {
   // New Skill Form State
   const [newSkillName, setNewSkillName] = useState('');
   const [newSkillCat, setNewSkillCat] = useState<SkillCategory>('programming_languages');
-  const [newSkillEvidence, setNewSkillEvidence] = useState<EvidenceLevel>('Candidate Confirmed');
+  const [newSkillEvidence] = useState<EvidenceLevel>('Candidate Confirmed');
   const [newSkillStatus, setNewSkillStatus] = useState<SkillStatus>('active');
   const [newSkillYears, setNewSkillYears] = useState('');
   const [newSkillNotes, setNewSkillNotes] = useState('');
@@ -83,7 +93,7 @@ export const SkillGapPage: React.FC = () => {
         if (data.target_role) setTargetRole(data.target_role);
       }
     } catch {
-      // Fallback
+      // Graceful fallback
     } finally {
       setIsLoadingSkills(false);
     }
@@ -99,7 +109,7 @@ export const SkillGapPage: React.FC = () => {
         setAnalysisRecord(data.analysis);
       }
     } catch {
-      // Fallback
+      // Graceful fallback
     }
   };
 
@@ -195,427 +205,482 @@ export const SkillGapPage: React.FC = () => {
     return item.status.toLowerCase().replace(/\s+/g, '_') === statusFilter;
   });
 
-  const getStatusBadgeClass = (status: SkillGapStatus) => {
-    switch (status) {
-      case 'Demonstrated':
-        return 'badge-demonstrated';
-      case 'Needs Refresh':
-        return 'badge-refresh';
-      case 'Developing':
-        return 'badge-developing';
-      case 'Not Yet Demonstrated':
-        return 'badge-missing';
-      default:
-        return '';
-    }
-  };
-
-  const getEvidenceBadgeClass = (level: EvidenceLevel) => {
-    switch (level) {
-      case 'Verified Evidence':
-        return 'badge-verified';
-      case 'Demonstrated Evidence':
-        return 'badge-demonstrated-ev';
-      case 'Candidate Confirmed':
-        return 'badge-confirmed';
-      case 'AI Extracted':
-        return 'badge-ai';
-      default:
-        return 'badge-none';
-    }
-  };
-
   return (
-    <div className="dashboard-layout">
-      {/* Top Header */}
-      <header className="dashboard-header">
-        <div className="dashboard-brand">
-          <Link to="/dashboard" className="brand-logo-text" style={{ textDecoration: 'none' }}>
-            SkillBridge
-          </Link>
-          <span className="role-badge badge-candidate">Candidate</span>
-        </div>
-
-        <nav className="header-nav-links">
-          <Link to="/dashboard" className="btn btn-outline btn-sm">Dashboard</Link>
-          <Link to="/profile" className="btn btn-outline btn-sm">Profile</Link>
-          <Link to="/skills" className="btn btn-primary btn-sm">Skills & Gap</Link>
-          <Link to="/assessments" className="btn btn-outline btn-sm">Assessments</Link>
-          <Link to="/projects" className="btn btn-outline btn-sm">Projects</Link>
-          <Link to="/passport" className="btn btn-outline btn-sm">Passport</Link>
-          <button onClick={() => logout()} className="btn btn-outline btn-sm">Logout</button>
-        </nav>
-      </header>
-
-      <main className="dashboard-content">
-        <div className="dashboard-heading-section">
-          <h1>Skills & Explainable Skill-Gap Diagnostics</h1>
-          <p className="dashboard-subtitle">
-            Manage your categorized confirmed skills, benchmark against job requirements, and view explainable gap analysis.
+    <div>
+      {/* Page Header */}
+      <div className="page-header">
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Skill Diagnostics
+            </span>
+            <span className="status-badge badge-developing badge-sm">
+              <Sparkles className="w-3.5 h-3.5" />
+              Gemini AI Powered
+            </span>
+          </div>
+          <h1 className="page-title">Skills & Skill-Gap Analysis</h1>
+          <p className="page-subtitle">
+            Manage your confirmed skills inventory and benchmark your capabilities against specific job descriptions using Gemini AI.
           </p>
         </div>
 
-        {errorMsg && <div className="alert-error">{errorMsg}</div>}
-        {saveSuccessMsg && <div className="alert-success">{saveSuccessMsg}</div>}
+        <div className="page-header-actions">
+          <Link to="/passport" className="btn btn-outline">
+            <ShieldCheck className="w-4 h-4 mr-1" />
+            Skill Passport
+          </Link>
+          <Link to="/assessments" className="btn btn-primary">
+            Take Assessment →
+          </Link>
+        </div>
+      </div>
 
-        {/* Tab Navigation */}
-        <div className="subnav-tabs">
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === 'skills' ? 'active' : ''}`}
-            onClick={() => setActiveTab('skills')}
-          >
-            Confirmed Skills ({skills.length})
-          </button>
-          <button
-            type="button"
-            className={`tab-btn ${activeTab === 'gap_analysis' ? 'active' : ''}`}
-            onClick={() => setActiveTab('gap_analysis')}
-          >
-            Skill-Gap Analysis {analysisRecord ? '✓' : ''}
-          </button>
+      {errorMsg && (
+        <div className="alert-error">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
+      {saveSuccessMsg && (
+        <div className="success-banner">
+          <CheckCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{saveSuccessMsg}</span>
+        </div>
+      )}
+
+      {/* Target Role Banner Card */}
+      <div
+        className="card"
+        style={{
+          marginBottom: '1.75rem',
+          backgroundColor: '#ffffff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <div style={{ width: '42px', height: '42px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Target className="w-6 h-6" />
+          </div>
+          <div>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--slate-500)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Target Job Role
+            </span>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--slate-900)' }}>
+              {targetRole || 'Software Engineer'}
+            </h3>
+          </div>
         </div>
 
-        {/* TAB 1: CONFIRMED SKILLS PAGE */}
-        {activeTab === 'skills' && (
-          <div className="tab-pane">
-            <section className="profile-details-card">
-              <div className="card-header-flex">
-                <div>
-                  <h2>Candidate Confirmed Skills</h2>
-                  <p className="section-instruction">
-                    Skills explicitly verified and documented by you. Track experience, currency, and evidence level distinctions.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSaveSkills}
-                  className="btn btn-primary"
-                >
-                  Save Skills
-                </button>
-              </div>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <input
+            type="text"
+            value={targetRole}
+            onChange={(e) => setTargetRole(e.target.value)}
+            placeholder="Change target role..."
+            className="form-input"
+            style={{ width: '220px' }}
+          />
+          <button onClick={handleSaveSkills} className="btn btn-outline btn-sm">
+            Update Role
+          </button>
+        </div>
+      </div>
 
-              {isLoadingSkills ? (
-                <p>Loading confirmed skills...</p>
-              ) : (
-                <div className="categories-stack">
-                  {CATEGORIES.map((cat) => {
-                    const catSkills = skills.filter((s) => s.category === cat.key);
-                    return (
-                      <div key={cat.key} className="skill-category-card">
-                        <div className="cat-header">
-                          <span className="cat-title">{cat.label}</span>
-                          <span className="cat-count">({catSkills.length})</span>
-                        </div>
+      {/* Tabs Header */}
+      <div className="tabs-nav">
+        <button
+          onClick={() => setActiveTab('skills')}
+          className={`tab-btn ${activeTab === 'skills' ? 'tab-btn-active' : ''}`}
+        >
+          <CheckCircle className="w-4 h-4" />
+          Confirmed Skills Inventory ({skills.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('gap_analysis')}
+          className={`tab-btn ${activeTab === 'gap_analysis' ? 'tab-btn-active' : ''}`}
+        >
+          <Sparkles className="w-4 h-4" />
+          Gemini Skill-Gap Diagnostics
+          {analysisRecord && (
+            <span style={{ fontSize: '0.7rem', padding: '0.1rem 0.45rem', backgroundColor: '#ecfdf5', color: '#065f46', borderRadius: '9999px', fontWeight: 700 }}>
+              Analyzed
+            </span>
+          )}
+        </button>
+      </div>
 
-                        {catSkills.length === 0 ? (
-                          <p className="empty-hint">No skills confirmed in this category yet.</p>
-                        ) : (
-                          <div className="skills-detailed-grid">
-                            {catSkills.map((skill) => (
-                              <div key={skill.name} className="skill-item-row">
-                                <div className="skill-main-info">
-                                  <strong className="skill-title">{skill.name}</strong>
-                                  <div className="badge-cluster">
-                                    <span className={`evidence-badge ${getEvidenceBadgeClass(skill.evidence_level || 'Candidate Confirmed')}`}>
-                                      {skill.evidence_level || 'Candidate Confirmed'}
-                                    </span>
-                                    <span className={`status-pill ${skill.status === 'developing' ? 'developing' : 'active'}`}>
-                                      {skill.status === 'developing' ? 'Developing' : 'Active'}
-                                    </span>
-                                    {skill.years_experience && (
-                                      <span className="exp-pill">{skill.years_experience} yrs exp</span>
-                                    )}
-                                  </div>
-                                  {skill.notes && <p className="skill-note">{skill.notes}</p>}
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveSkill(skill.name)}
-                                  className="remove-tag-btn"
-                                  title="Remove skill"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
+      {/* TAB 1: CONFIRMED SKILLS */}
+      {activeTab === 'skills' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+          {/* Add Skill Card */}
+          <div className="card">
+            <h3 className="card-title" style={{ marginBottom: '1rem' }}>
+              <Plus className="w-4 h-4 text-indigo-600" />
+              Add Confirmed Skill to Inventory
+            </h3>
 
-            {/* Add New Skill Form */}
-            <section className="profile-details-card">
-              <h2>+ Add Confirmed Skill</h2>
-              <form onSubmit={handleAddSkill} className="add-skill-form">
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Skill Name</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Java, PostgreSQL, Kafka"
-                      value={newSkillName}
-                      onChange={(e) => setNewSkillName(e.target.value)}
-                      className="form-input"
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Category</label>
-                    <select
-                      value={newSkillCat}
-                      onChange={(e) => setNewSkillCat(e.target.value as SkillCategory)}
-                      className="form-input"
-                    >
-                      {CATEGORIES.map((cat) => (
-                        <option key={cat.key} value={cat.key}>
-                          {cat.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Evidence Distinction</label>
-                    <select
-                      value={newSkillEvidence}
-                      onChange={(e) => setNewSkillEvidence(e.target.value as EvidenceLevel)}
-                      className="form-input"
-                    >
-                      <option value="Candidate Confirmed">Candidate Confirmed</option>
-                      <option value="Demonstrated Evidence">Demonstrated Evidence</option>
-                      <option value="Verified Evidence">Verified Evidence</option>
-                      <option value="AI Extracted">AI Extracted</option>
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Currency / Status</label>
-                    <select
-                      value={newSkillStatus}
-                      onChange={(e) => setNewSkillStatus(e.target.value as SkillStatus)}
-                      className="form-input"
-                    >
-                      <option value="active">Active</option>
-                      <option value="needs_refresh">Needs Refresh</option>
-                      <option value="developing">Developing / Learning</option>
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Years Experience (Optional)</label>
-                    <input
-                      type="number"
-                      placeholder="e.g. 4"
-                      value={newSkillYears}
-                      onChange={(e) => setNewSkillYears(e.target.value)}
-                      className="form-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group" style={{ marginTop: '0.75rem' }}>
-                  <label>Skill Context / Notes (Optional)</label>
+            <form onSubmit={handleAddSkill}>
+              <div className="profile-grid">
+                <div className="profile-field">
+                  <label>Skill Name *</label>
                   <input
                     type="text"
-                    placeholder="e.g. Production microservices development"
-                    value={newSkillNotes}
-                    onChange={(e) => setNewSkillNotes(e.target.value)}
+                    required
+                    placeholder="e.g. Java, Spring Boot, React, Docker"
+                    value={newSkillName}
+                    onChange={(e) => setNewSkillName(e.target.value)}
                     className="form-input"
                   />
                 </div>
 
-                <div style={{ marginTop: '1rem' }}>
-                  <button type="submit" className="btn btn-secondary">
-                    Add to Confirmed Skills
-                  </button>
+                <div className="profile-field">
+                  <label>Category</label>
+                  <select
+                    value={newSkillCat}
+                    onChange={(e) => setNewSkillCat(e.target.value as SkillCategory)}
+                    className="profile-input"
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c.key} value={c.key}>{c.label}</option>
+                    ))}
+                  </select>
                 </div>
-              </form>
-            </section>
-          </div>
-        )}
 
-        {/* TAB 2: SKILL GAP ANALYSIS */}
-        {activeTab === 'gap_analysis' && (
-          <div className="tab-pane">
-            {/* Input Job Requirement Section */}
-            <section className="profile-details-card">
-              <h2>Job Requirement & Target Role Input</h2>
-              <p className="section-instruction">
-                Enter your target role and paste a real job description. Gemini AI will extract required vs. preferred skills and generate an explainable 4-tier gap diagnostic.
-              </p>
+                <div className="profile-field">
+                  <label>Years of Experience</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    placeholder="e.g. 3.5"
+                    value={newSkillYears}
+                    onChange={(e) => setNewSkillYears(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
 
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label>Target Role</label>
+                <div className="profile-field">
+                  <label>Status / Currency</label>
+                  <select
+                    value={newSkillStatus}
+                    onChange={(e) => setNewSkillStatus(e.target.value as SkillStatus)}
+                    className="profile-input"
+                  >
+                    <option value="active">Active / Confirmed</option>
+                    <option value="needs_refresh">Needs Refresh</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="profile-field" style={{ marginTop: '0.25rem' }}>
+                <label>Practical Context / Notes (Optional)</label>
                 <input
                   type="text"
-                  value={targetRole}
-                  onChange={(e) => setTargetRole(e.target.value)}
-                  placeholder="e.g. Senior Java Backend Developer"
+                  placeholder="e.g. Built core auth microservice and REST endpoints"
+                  value={newSkillNotes}
+                  onChange={(e) => setNewSkillNotes(e.target.value)}
                   className="form-input"
                 />
               </div>
 
-              <div className="form-group">
-                <div className="label-row-flex">
-                  <label>Job Description Requirements</label>
-                  <button
-                    type="button"
-                    onClick={() => setJobDescriptionInput(SAMPLE_JOB_DESCRIPTION)}
-                    className="btn-link"
-                    style={{ color: '#4f46e5' }}
-                  >
-                    Load Sample Job Description
-                  </button>
-                </div>
-                <textarea
-                  rows={6}
-                  value={jobDescriptionInput}
-                  onChange={(e) => setJobDescriptionInput(e.target.value)}
-                  placeholder="Paste job description or requirements here..."
-                  className="form-input"
-                />
-              </div>
-
-              <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                <button
-                  type="button"
-                  onClick={handleRunAnalysis}
-                  disabled={isAnalyzing || !jobDescriptionInput.trim()}
-                  className="btn btn-primary"
-                >
-                  {isAnalyzing ? 'Analyzing with Gemini AI...' : 'Analyze Skill Gap with Gemini'}
+              <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem' }}>
+                <button type="submit" className="btn btn-primary">
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Skill
                 </button>
-                {analysisRecord && (
-                  <span className="saved-indicator">
-                    ✓ Stored in database ({new Date(analysisRecord.created_at).toLocaleTimeString()})
-                  </span>
-                )}
+                <button type="button" onClick={handleSaveSkills} className="btn btn-secondary">
+                  Save All Changes to Database
+                </button>
               </div>
-            </section>
+            </form>
+          </div>
 
-            {/* Analysis Results Display */}
-            {analysisRecord && (
-              <section className="profile-details-card">
-                <h2>Explainable Skill-Gap Diagnostics</h2>
-                <p className="section-instruction">
-                  {analysisRecord.summary.summary_narrative}
+          {/* Categorized Skills View */}
+          <div className="card">
+            <div className="card-header">
+              <div>
+                <h3 className="card-title">Confirmed Skills by Category</h3>
+                <p className="card-desc">
+                  Separates candidate-confirmed skills from AI predictions and verified test evidence.
                 </p>
+              </div>
+              <button onClick={handleSaveSkills} className="btn btn-primary btn-sm">
+                Save Skills
+              </button>
+            </div>
 
-                {/* Separate Breakdown Cards (No Flattened Opaque Score) */}
-                <div className="metrics-grid">
-                  <div className="metric-box demonstrated">
-                    <span className="metric-number">{analysisRecord.summary.demonstrated_count}</span>
-                    <span className="metric-label">Demonstrated</span>
-                    <span className="metric-desc">Verified / Confirmed capability</span>
-                  </div>
+            {isLoadingSkills ? (
+              <div style={{ padding: '2rem 1rem', textAlign: 'center' }}>
+                <div className="loading-spinner-ring" style={{ margin: '0 auto 0.75rem' }} />
+                <p className="loading-text">Loading confirmed skills...</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {CATEGORIES.map((cat) => {
+                const catSkills = skills.filter((s) => s.category === cat.key);
+                return (
+                  <div key={cat.key} style={{ backgroundColor: 'var(--slate-50)', border: '1px solid var(--slate-200)', borderRadius: 'var(--radius-md)', padding: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--slate-700)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        {cat.label} ({catSkills.length})
+                      </span>
+                    </div>
 
-                  <div className="metric-box refresh">
-                    <span className="metric-number">{analysisRecord.summary.needs_refresh_count}</span>
-                    <span className="metric-label">Needs Refresh</span>
-                    <span className="metric-desc">Historical background; hiatus refresh needed</span>
-                  </div>
-
-                  <div className="metric-box developing">
-                    <span className="metric-number">{analysisRecord.summary.developing_count}</span>
-                    <span className="metric-label">Developing</span>
-                    <span className="metric-desc">Active learning in progress</span>
-                  </div>
-
-                  <div className="metric-box missing">
-                    <span className="metric-number">{analysisRecord.summary.not_demonstrated_count}</span>
-                    <span className="metric-label">Not Yet Demonstrated</span>
-                    <span className="metric-desc">Required by job; no evidence yet</span>
-                  </div>
-                </div>
-
-                {/* Top Recommendations */}
-                {analysisRecord.summary.top_recommendations.length > 0 && (
-                  <div className="recommendations-box">
-                    <h3>Actionable Recommendations for Improvement</h3>
-                    <ul className="rec-list">
-                      {analysisRecord.summary.top_recommendations.map((rec, idx) => (
-                        <li key={idx}>{rec}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Status Filter */}
-                <div className="filter-bar">
-                  <span className="filter-title">Filter by Diagnostic Status:</span>
-                  <div className="filter-buttons">
-                    {['all', 'demonstrated', 'needs_refresh', 'developing', 'not_yet_demonstrated'].map((f) => (
-                      <button
-                        key={f}
-                        type="button"
-                        className={`filter-btn ${statusFilter === f ? 'active' : ''}`}
-                        onClick={() => setStatusFilter(f)}
-                      >
-                        {f.replace(/_/g, ' ').toUpperCase()}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Diagnostic Skills Table / Cards */}
-                <div className="diagnostic-table-wrapper">
-                  <table className="diagnostic-table">
-                    <thead>
-                      <tr>
-                        <th>Skill & Category</th>
-                        <th>Job Requirement</th>
-                        <th>Diagnostic Status</th>
-                        <th>Evidence Distinction</th>
-                        <th>Explainable Rationale & Recommendation</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredGapResults?.map((item) => (
-                        <tr key={item.skill_name}>
-                          <td>
-                            <strong>{item.skill_name}</strong>
-                            <span className="cat-sub">{item.category.replace(/_/g, ' ')}</span>
-                          </td>
-                          <td>
-                            <span className={`req-badge ${item.requirement_level}`}>
-                              {item.requirement_level === 'required' ? 'Mandatory' : 'Preferred'}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`status-badge ${getStatusBadgeClass(item.status)}`}>
-                              {item.status}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`evidence-badge ${getEvidenceBadgeClass(item.evidence_level)}`}>
-                              {item.evidence_level}
-                            </span>
-                          </td>
-                          <td>
-                            <p className="explanation-text">{item.explanation}</p>
-                            {item.recommendation && (
-                              <p className="recommendation-text">
-                                <strong>Recommendation:</strong> {item.recommendation}
-                              </p>
+                    {catSkills.length === 0 ? (
+                      <span style={{ fontSize: '0.8rem', color: 'var(--slate-400)', fontStyle: 'italic' }}>
+                        No skills recorded in this category.
+                      </span>
+                    ) : (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        {catSkills.map((s) => (
+                          <div
+                            key={s.name}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.45rem',
+                              padding: '0.35rem 0.75rem',
+                              backgroundColor: '#ffffff',
+                              border: '1px solid var(--slate-200)',
+                              borderRadius: 'var(--radius-md)',
+                              fontSize: '0.8125rem',
+                              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                            }}
+                          >
+                            <strong style={{ color: 'var(--slate-900)' }}>{s.name}</strong>
+                            {s.years_experience != null && (
+                              <span style={{ fontSize: '0.72rem', color: 'var(--slate-400)' }}>
+                                ({s.years_experience}y)
+                              </span>
                             )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
+                            <StatusBadge status={s.status === 'active' ? 'Demonstrated' : 'Needs Refresh'} size="sm" showIcon={false} />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSkill(s.name)}
+                              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--slate-400)', padding: 0 }}
+                              title="Remove skill"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
             )}
           </div>
-        )}
-      </main>
+        </div>
+      )}
+
+      {/* TAB 2: GEMINI SKILL GAP DIAGNOSTICS */}
+      {activeTab === 'gap_analysis' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+          {/* Job Description Input Card */}
+          <div className="card">
+            <div className="card-header">
+              <div>
+                <h3 className="card-title">
+                  <Sparkles className="w-4 h-4 text-indigo-600" />
+                  1. Target Job Description Input
+                </h3>
+                <p className="card-desc">
+                  Paste any job description to run a real Gemini AI extraction of required and preferred skills.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setJobDescriptionInput(SAMPLE_JOB_DESCRIPTION)}
+                className="btn btn-outline btn-sm"
+              >
+                Insert Sample Job Spec
+              </button>
+            </div>
+
+            <div className="form-group">
+              <label>Job Description & Requirements</label>
+              <textarea
+                rows={6}
+                placeholder="Paste the job description or role specification here..."
+                value={jobDescriptionInput}
+                onChange={(e) => setJobDescriptionInput(e.target.value)}
+                className="profile-textarea"
+                style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleRunAnalysis}
+              disabled={isAnalyzing}
+              className="btn btn-primary btn-lg"
+            >
+              {isAnalyzing ? (
+                <>
+                  <div className="loading-spinner-ring" style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
+                  Extracting Requirements with Gemini AI...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-1" />
+                  Run Gemini Skill-Gap Analysis
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Analysis Results View */}
+          {analysisRecord && (
+            <div className="card">
+              <div className="card-header">
+                <div>
+                  <h3 className="card-title">
+                    <Target className="w-4 h-4 text-indigo-600" />
+                    2. Explainable Skill-Gap Results
+                  </h3>
+                  <p className="card-desc">
+                    Target Role: <strong>{analysisRecord.target_role}</strong> · Analyzed {new Date(analysisRecord.created_at).toLocaleString()}
+                  </p>
+                </div>
+
+                {analysisRecord.summary && (
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--slate-500)', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
+                      REQUIREMENTS MATCH
+                    </span>
+                    <strong style={{ fontSize: '1.5rem', fontWeight: 800, color: '#059669' }}>
+                      {analysisRecord.summary.total_skills_analyzed > 0
+                        ? Math.round(
+                            ((analysisRecord.summary.demonstrated_count +
+                              analysisRecord.summary.developing_count * 0.5) /
+                              analysisRecord.summary.total_skills_analyzed) *
+                              100
+                          )
+                        : 0}
+                      %
+                    </strong>
+                  </div>
+                )}
+              </div>
+
+              {/* Status Breakdown Summary */}
+              {analysisRecord.summary && (
+                <div className="stats-grid" style={{ marginBottom: '1.5rem' }}>
+                  <StatCard
+                    label="Demonstrated"
+                    value={analysisRecord.summary.demonstrated_count || 0}
+                    icon={<CheckCircle className="w-4 h-4 text-emerald-600" />}
+                    hint="Skills ready for interview"
+                    variant="success"
+                  />
+                  <StatCard
+                    label="Needs Refresh"
+                    value={analysisRecord.summary.needs_refresh_count || 0}
+                    icon={<Clock className="w-4 h-4 text-amber-600" />}
+                    hint="Hiatus refresh suggested"
+                    variant="warning"
+                  />
+                  <StatCard
+                    label="Developing"
+                    value={analysisRecord.summary.developing_count || 0}
+                    icon={<Sparkles className="w-4 h-4 text-violet-600" />}
+                    hint="In active progression"
+                    variant="violet"
+                  />
+                  <StatCard
+                    label="Not Yet Demonstrated"
+                    value={analysisRecord.summary.not_demonstrated_count || 0}
+                    icon={<AlertCircle className="w-4 h-4 text-red-600" />}
+                    hint="High priority upskilling"
+                    variant="default"
+                  />
+                </div>
+              )}
+
+              {/* Skill Matrix Filter */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--slate-700)' }}>
+                  Detailed Skill Comparison Matrix:
+                </span>
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                  {['all', 'demonstrated', 'needs_refresh', 'developing', 'not_yet_demonstrated'].map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setStatusFilter(f)}
+                      className={`btn btn-sm ${statusFilter === f ? 'btn-primary' : 'btn-outline'}`}
+                      style={{ fontSize: '0.75rem', textTransform: 'capitalize' }}
+                    >
+                      {f.replace(/_/g, ' ')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Diagnostic Table */}
+              <div className="table-responsive" style={{ marginBottom: '1.5rem' }}>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Job Requirement Skill</th>
+                      <th>Category</th>
+                      <th>Evaluated Status</th>
+                      <th>Evidence Tier</th>
+                      <th>Explainable Recommendation</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(filteredGapResults || []).map((item, idx) => (
+                      <tr key={idx}>
+                        <td>
+                          <strong style={{ color: 'var(--slate-900)' }}>{item.skill_name}</strong>
+                        </td>
+                        <td style={{ fontSize: '0.78rem', color: 'var(--slate-500)', textTransform: 'capitalize' }}>
+                          {item.category?.replace(/_/g, ' ')}
+                        </td>
+                        <td>
+                          <StatusBadge status={item.status} size="sm" />
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--slate-600)' }}>
+                            {item.evidence_level}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: '0.8125rem', color: 'var(--slate-700)' }}>
+                          {item.recommendation}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Next Action Prompts */}
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap', backgroundColor: 'var(--slate-50)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--slate-800)' }}>
+                  Recommended Next Steps:
+                </span>
+                <Link to="/assessments" className="btn btn-primary btn-sm">
+                  Take Benchmark Challenge
+                </Link>
+                <Link to="/projects" className="btn btn-outline btn-sm">
+                  Build Sandbox Project
+                </Link>
+                <Link to="/reports" className="btn btn-outline btn-sm">
+                  Export Diagnostic Report
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
