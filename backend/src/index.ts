@@ -25,7 +25,18 @@ const app: Application = express();
 const PORT = process.env.PORT || 5001;
 
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. mobile apps, curl, same-origin)
+    if (!origin) return callback(null, true);
+    if (
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1') ||
+      origin.endsWith('.vercel.app')
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true); // Allow all during demo deployment
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -59,8 +70,11 @@ Promise.all([
     console.error('Initialization error:', err);
   });
 
-app.listen(PORT, () => {
-  console.log(`SkillBridge backend running on port ${PORT}`);
-});
+// Only listen directly when not running in serverless (e.g., local dev)
+if (process.env.VERCEL !== '1' && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  app.listen(PORT, () => {
+    console.log(`SkillBridge backend running on port ${PORT}`);
+  });
+}
 
 export default app;
