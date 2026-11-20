@@ -20,15 +20,12 @@ export function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Landing page kept for reference */}
-          <Route path="/landing" element={<LandingPage />} />
+          {/* Landing page — choose Candidate or Employer */}
+          <Route path="/" element={<LandingPage />} />
 
-          {/* Login & register redirect to candidate dashboard */}
-          <Route path="/login" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/register" element={<Navigate to="/dashboard" replace />} />
-
-          {/* Root → Candidate Dashboard */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {/* Login & register redirect to landing */}
+          <Route path="/login" element={<Navigate to="/" replace />} />
+          <Route path="/register" element={<Navigate to="/" replace />} />
 
           {/* All dashboard routes — no auth check */}
           <Route element={<ProtectedRoute />}>

@@ -53,35 +53,62 @@ export const LandingPage: React.FC = () => {
           SkillBridge bridges the employment gap by replacing resume screening bias with verified technical proof of work. Benchmark assessments, sandbox projects, and a cryptographic skill freshness passport empower returners to re-enter with confidence.
         </p>
 
-        <div className="hero-cta-bar">
-          <Link to="/dashboard" className="btn btn-primary btn-large">
-            Candidate Dashboard <ArrowRight className="w-4 h-4 ml-1" />
+        {/* Role Selection Cards — no login required */}
+        <div style={{ display: 'flex', gap: '1.5rem', marginTop: '2.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          {/* Candidate Card */}
+          <Link
+            to="/dashboard"
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.75rem',
+              background: 'rgba(99,102,241,0.12)', border: '1.5px solid rgba(99,102,241,0.4)',
+              borderRadius: '1rem', padding: '2rem 2.5rem', minWidth: '260px', maxWidth: '320px',
+              color: '#fff', textDecoration: 'none', transition: 'all 0.2s',
+              cursor: 'pointer',
+            }}
+          >
+            <div style={{ background: 'rgba(99,102,241,0.25)', borderRadius: '0.75rem', padding: '0.75rem' }}>
+              <Users className="w-7 h-7" style={{ color: '#a5b4fc' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#c7d2fe', marginBottom: '0.3rem' }}>I'm a Candidate</div>
+              <div style={{ fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                View your profile, skill gaps, assessments, projects & passport
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#818cf8', fontWeight: 600, fontSize: '0.9rem', marginTop: '0.5rem' }}>
+              Open Candidate Dashboard <ArrowRight className="w-4 h-4" />
+            </div>
           </Link>
-          <Link to="/employer" className="btn btn-outline btn-large" style={{ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,0.2)' }}>
-            Employer Dashboard
+
+          {/* Employer Card */}
+          <Link
+            to="/employer"
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.75rem',
+              background: 'rgba(59,130,246,0.12)', border: '1.5px solid rgba(59,130,246,0.4)',
+              borderRadius: '1rem', padding: '2rem 2.5rem', minWidth: '260px', maxWidth: '320px',
+              color: '#fff', textDecoration: 'none', transition: 'all 0.2s',
+              cursor: 'pointer',
+            }}
+          >
+            <div style={{ background: 'rgba(59,130,246,0.25)', borderRadius: '0.75rem', padding: '0.75rem' }}>
+              <ShieldCheck className="w-7 h-7" style={{ color: '#93c5fd' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#bfdbfe', marginBottom: '0.3rem' }}>I'm an Employer</div>
+              <div style={{ fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                Post jobs, review candidates & evidence-based hiring tools
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#60a5fa', fontWeight: 600, fontSize: '0.9rem', marginTop: '0.5rem' }}>
+              Open Employer Dashboard <ArrowRight className="w-4 h-4" />
+            </div>
           </Link>
         </div>
 
-        {/* Direct access — no login needed */}
-        <div className="demo-login-callout">
-          <div className="demo-callout-title">Jump straight in — no login required</div>
-          <div className="demo-pills-row">
-            <Link
-              to="/dashboard"
-              className="btn btn-secondary btn-sm"
-              style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#c7d2fe', borderColor: 'rgba(99, 102, 241, 0.3)' }}
-            >
-              Candidate Dashboard (Returner Profile &amp; Passport)
-            </Link>
-            <Link
-              to="/employer"
-              className="btn btn-secondary btn-sm"
-              style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#93c5fd', borderColor: 'rgba(59, 130, 246, 0.3)' }}
-            >
-              Employer Dashboard (Job Board &amp; Evidence Review)
-            </Link>
-          </div>
-        </div>
+        <p style={{ marginTop: '1.25rem', color: '#64748b', fontSize: '0.82rem' }}>
+          No login or signup required — click to enter directly
+        </p>
       </section>
 
       {/* 5 Core Pillars Section */}
