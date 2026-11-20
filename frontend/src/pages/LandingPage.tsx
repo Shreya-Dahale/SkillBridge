@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import {
   Zap,
   ArrowRight,
@@ -13,8 +12,6 @@ import {
 } from '../components/Icons';
 
 export const LandingPage: React.FC = () => {
-  const { user, logout } = useAuth();
-
   return (
     <div className="landing-page-wrap">
       {/* Navigation Header */}
@@ -31,25 +28,12 @@ export const LandingPage: React.FC = () => {
         </div>
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          {user ? (
-            <>
-              <Link to="/dashboard" className="btn btn-primary btn-sm">
-                Open Dashboard ({user.role})
-              </Link>
-              <button onClick={() => logout()} className="btn btn-ghost btn-sm" style={{ color: '#cbd5e1' }}>
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="btn btn-ghost btn-sm" style={{ color: '#cbd5e1' }}>
-                Sign In
-              </Link>
-              <Link to="/register" className="btn btn-primary btn-sm">
-                Get Started
-              </Link>
-            </>
-          )}
+          <Link to="/dashboard" className="btn btn-primary btn-sm">
+            Candidate Dashboard
+          </Link>
+          <Link to="/employer" className="btn btn-ghost btn-sm" style={{ color: '#93c5fd' }}>
+            Employer Dashboard
+          </Link>
         </nav>
       </header>
 
@@ -70,39 +54,31 @@ export const LandingPage: React.FC = () => {
         </p>
 
         <div className="hero-cta-bar">
-          {user ? (
-            <Link to="/dashboard" className="btn btn-primary btn-large">
-              Enter Workspace <ArrowRight className="w-4 h-4 ml-1" />
-            </Link>
-          ) : (
-            <>
-              <Link to="/login" className="btn btn-primary btn-large">
-                Start Evaluation <ArrowRight className="w-4 h-4 ml-1" />
-              </Link>
-              <Link to="/register" className="btn btn-outline btn-large" style={{ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,0.2)' }}>
-                Create Account
-              </Link>
-            </>
-          )}
+          <Link to="/dashboard" className="btn btn-primary btn-large">
+            Candidate Dashboard <ArrowRight className="w-4 h-4 ml-1" />
+          </Link>
+          <Link to="/employer" className="btn btn-outline btn-large" style={{ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,0.2)' }}>
+            Employer Dashboard
+          </Link>
         </div>
 
-        {/* 1-Click Interactive Demo Login Callout */}
+        {/* Direct access — no login needed */}
         <div className="demo-login-callout">
-          <div className="demo-callout-title">Instant 1-Click Interactive Demo Access</div>
+          <div className="demo-callout-title">Jump straight in — no login required</div>
           <div className="demo-pills-row">
             <Link
-              to="/login?demo=candidate"
+              to="/dashboard"
               className="btn btn-secondary btn-sm"
               style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#c7d2fe', borderColor: 'rgba(99, 102, 241, 0.3)' }}
             >
-              Candidate Demo (Returner Profile & Passport)
+              Candidate Dashboard (Returner Profile &amp; Passport)
             </Link>
             <Link
-              to="/login?demo=employer"
+              to="/employer"
               className="btn btn-secondary btn-sm"
               style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#93c5fd', borderColor: 'rgba(59, 130, 246, 0.3)' }}
             >
-              Employer Demo (Job Board & Evidence Review)
+              Employer Dashboard (Job Board &amp; Evidence Review)
             </Link>
           </div>
         </div>

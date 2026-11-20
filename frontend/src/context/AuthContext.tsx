@@ -1,5 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserProfile, UserRole, AuthResponse } from '../types/auth';
+import React, { createContext, useContext } from 'react';
+import { UserProfile, UserRole } from '../types/auth';
+
+// ── Auth-bypass mode ──────────────────────────────────────────────────────────
+// Login / signup is REMOVED. We inject a default guest user so every component
+// that calls useAuth() still gets a valid object without redirecting to /login.
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -10,100 +15,30 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
+const defaultUser: UserProfile = {
+  id: 'guest',
+  name: 'Guest User',
+  email: 'guest@skillbridge.app',
+  role: 'candidate' as UserRole,
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('sb_token'));
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    const verifyAuth = async () => {
-      const savedToken = localStorage.getItem('sb_token');
-      if (!savedToken) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/auth/me', {
-          headers: {
-            Authorization: `Bearer ${savedToken}`,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.user);
-          setToken(savedToken);
-        } else {
-          // Token invalid or expired
-          localStorage.removeItem('sb_token');
-          setToken(null);
-          setUser(null);
-        }
-      } catch {
-        localStorage.removeItem('sb_token');
-        setToken(null);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    verifyAuth();
-  }, []);
-
-  const login = async (email: string, password: string): Promise<void> => {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Login failed');
-    }
-
-    const authRes = data as AuthResponse;
-    localStorage.setItem('sb_token', authRes.token);
-    setToken(authRes.token);
-    setUser(authRes.user);
-  };
-
-  const register = async (name: string, email: string, password: string, role: UserRole): Promise<void> => {
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, role }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Registration failed');
-    }
-
-    const authRes = data as AuthResponse;
-    localStorage.setItem('sb_token', authRes.token);
-    setToken(authRes.token);
-    setUser(authRes.user);
-  };
-
-  const logout = async (): Promise<void> => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-    } catch {
-      // Ignore network errors on logout
-    } finally {
-      localStorage.removeItem('sb_token');
-      setToken(null);
-      setUser(null);
-    }
-  };
+  // Always authenticated – no token needed
+  const noop = async () => {};
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user: defaultUser,
+        token: 'bypass',
+        isLoading: false,
+        login: noop,
+        register: noop,
+        logout: noop,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
