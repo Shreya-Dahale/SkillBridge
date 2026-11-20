@@ -7,11 +7,12 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Build output
+# Build output (DO NOT ignore frontend/dist — Vercel uses it)
+backend/dist/
 dist/
 build/
 
-# Environment files
+# Environment files (never commit secrets)
 .env
 .env.local
 .env.production

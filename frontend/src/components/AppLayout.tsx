@@ -13,7 +13,6 @@ import {
   Briefcase,
   FileText,
   Download,
-  LogOut,
   Building,
   Menu,
   X,
@@ -33,7 +32,7 @@ interface NavGroup {
 }
 
 export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { user, switchRole } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -41,9 +40,16 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
   const isCandidate = user?.role === 'candidate';
   const isEmployer = user?.role === 'employer';
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+  const handleSwitchToCandidate = () => {
+    switchRole('candidate');
+    navigate('/dashboard');
+    setMobileMenuOpen(false);
+  };
+
+  const handleSwitchToEmployer = () => {
+    switchRole('employer');
+    navigate('/employer');
+    setMobileMenuOpen(false);
   };
 
   const candidateGroups: NavGroup[] = [
@@ -89,7 +95,6 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
 
   const navGroups = isEmployer ? employerGroups : candidateGroups;
 
-  // Helper to determine if link is active
   const isActive = (path: string) => {
     if (path === '/employer') {
       return location.pathname === '/employer';
@@ -109,7 +114,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
           {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
 
-        <Link to="/dashboard" className="mobile-brand">
+        <Link to={isCandidate ? '/dashboard' : '/employer'} className="mobile-brand">
           <span className="brand-symbol">SB</span>
           <span className="brand-name">SkillBridge</span>
         </Link>
@@ -129,7 +134,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
       {/* Sidebar */}
       <aside className={`app-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-brand-area">
-          <Link to="/dashboard" className="sidebar-brand">
+          <Link to={isCandidate ? '/dashboard' : '/employer'} className="sidebar-brand">
             <div className="brand-icon-box">
               <Zap className="w-4 h-4 text-white" />
             </div>
@@ -140,11 +145,62 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
           </Link>
         </div>
 
+        {/* Role Switcher */}
+        <div style={{
+          margin: '0.75rem 1rem 0.25rem',
+          padding: '0.5rem',
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '0.5rem',
+        }}>
+          <div style={{ fontSize: '0.6rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.08em', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
+            Switch View
+          </div>
+          <div style={{ display: 'flex', gap: '0.35rem' }}>
+            <button
+              onClick={handleSwitchToCandidate}
+              style={{
+                flex: 1,
+                padding: '0.3rem 0.5rem',
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                borderRadius: '0.35rem',
+                border: 'none',
+                cursor: 'pointer',
+                background: isCandidate ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.05)',
+                color: isCandidate ? '#a5b4fc' : '#64748b',
+                outline: isCandidate ? '1px solid rgba(99,102,241,0.5)' : 'none',
+                transition: 'all 0.15s',
+              }}
+            >
+              👤 Candidate
+            </button>
+            <button
+              onClick={handleSwitchToEmployer}
+              style={{
+                flex: 1,
+                padding: '0.3rem 0.5rem',
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                borderRadius: '0.35rem',
+                border: 'none',
+                cursor: 'pointer',
+                background: isEmployer ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.05)',
+                color: isEmployer ? '#93c5fd' : '#64748b',
+                outline: isEmployer ? '1px solid rgba(59,130,246,0.5)' : 'none',
+                transition: 'all 0.15s',
+              }}
+            >
+              🏢 Employer
+            </button>
+          </div>
+        </div>
+
         {/* Realtime Live Indicator */}
         <div className="sidebar-live-bar">
           <span className="live-dot-pulse" />
-          <span className="live-text">Realtime Active</span>
-          <span className="live-mode-badge">{isCandidate ? 'Candidate Mode' : 'Employer Mode'}</span>
+          <span className="live-text">Live Demo Mode</span>
+          <span className="live-mode-badge">{isCandidate ? 'Candidate' : 'Employer'}</span>
         </div>
 
         {/* Navigation list */}
@@ -178,7 +234,7 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
           ))}
         </nav>
 
-        {/* Sidebar Footer with User Profile */}
+        {/* Sidebar Footer */}
         <div className="sidebar-footer">
           <div className="user-profile-card">
             <div className="user-avatar-circle">
@@ -191,13 +247,15 @@ export const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children })
                 {isCandidate ? 'Verified Candidate' : 'Employer Partner'}
               </span>
             </div>
+            {/* Switch role icon button */}
             <button
-              onClick={handleLogout}
+              onClick={isCandidate ? handleSwitchToEmployer : handleSwitchToCandidate}
               className="logout-icon-btn"
-              title="Sign Out"
-              aria-label="Sign out"
+              title={isCandidate ? 'Switch to Employer' : 'Switch to Candidate'}
+              aria-label="Switch role"
+              style={{ fontSize: '0.9rem' }}
             >
-              <LogOut className="w-4 h-4" />
+              {isCandidate ? '🏢' : '👤'}
             </button>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import { useAuth } from '../context/AuthContext';
 
 export function useApi() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
 
   const authFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
     return fetch(url, {
@@ -9,6 +9,7 @@ export function useApi() {
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(user?.role ? { 'X-User-Role': user.role } : {}),
         ...(options.headers || {}),
       },
     });

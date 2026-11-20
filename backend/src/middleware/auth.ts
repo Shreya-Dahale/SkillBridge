@@ -30,6 +30,30 @@ export function authenticateToken(
     return;
   }
 
+  // Support demo / bypass tokens used by client personas
+  if (token === 'bypass_token' || token === 'bypass' || token.startsWith('bypass')) {
+    const isEmployerRoute = req.originalUrl.includes('/employer');
+    const roleHeader = (req.headers['x-user-role'] as string) || (req.headers['x-role'] as string);
+    const role: UserRole = roleHeader
+      ? (roleHeader === 'employer' ? 'employer' : 'candidate')
+      : (isEmployerRoute ? 'employer' : 'candidate');
+
+    req.user = role === 'employer'
+      ? {
+          id: 'usr_employer_apex',
+          email: 's.jenkins@apexfintech.demo',
+          role: 'employer',
+          name: 'Sarah Jenkins (Apex FinTech)',
+        }
+      : {
+          id: 'usr_candidate_priya',
+          email: 'priya.sharma@skillbridge.demo',
+          role: 'candidate',
+          name: 'Priya Sharma',
+        };
+    return next();
+  }
+
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err || !decoded) {
       res.status(403).json({ error: 'Invalid or expired token' });

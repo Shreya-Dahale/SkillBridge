@@ -1,5 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
   Zap,
   ArrowRight,
@@ -12,6 +13,19 @@ import {
 } from '../components/Icons';
 
 export const LandingPage: React.FC = () => {
+  const { switchRole } = useAuth();
+  const navigate = useNavigate();
+
+  const goCandidate = () => {
+    switchRole('candidate');
+    navigate('/dashboard');
+  };
+
+  const goEmployer = () => {
+    switchRole('employer');
+    navigate('/employer');
+  };
+
   return (
     <div className="landing-page-wrap">
       {/* Navigation Header */}
@@ -28,12 +42,12 @@ export const LandingPage: React.FC = () => {
         </div>
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <Link to="/dashboard" className="btn btn-primary btn-sm">
+          <button onClick={goCandidate} className="btn btn-primary btn-sm">
             Candidate Dashboard
-          </Link>
-          <Link to="/employer" className="btn btn-ghost btn-sm" style={{ color: '#93c5fd' }}>
+          </button>
+          <button onClick={goEmployer} className="btn btn-ghost btn-sm" style={{ color: '#93c5fd' }}>
             Employer Dashboard
-          </Link>
+          </button>
         </nav>
       </header>
 
@@ -50,20 +64,20 @@ export const LandingPage: React.FC = () => {
         </h1>
 
         <p className="hero-description">
-          SkillBridge bridges the employment gap by replacing resume screening bias with verified technical proof of work. Benchmark assessments, sandbox projects, and a cryptographic skill freshness passport empower returners to re-enter with confidence.
+          SkillBridge bridges the employment gap by replacing resume screening bias with verified technical proof of work. Benchmark assessments, sandbox projects, and a skill freshness passport empower returners to re-enter with confidence.
         </p>
 
         {/* Role Selection Cards — no login required */}
         <div style={{ display: 'flex', gap: '1.5rem', marginTop: '2.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
           {/* Candidate Card */}
-          <Link
-            to="/dashboard"
+          <button
+            onClick={goCandidate}
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.75rem',
               background: 'rgba(99,102,241,0.12)', border: '1.5px solid rgba(99,102,241,0.4)',
               borderRadius: '1rem', padding: '2rem 2.5rem', minWidth: '260px', maxWidth: '320px',
               color: '#fff', textDecoration: 'none', transition: 'all 0.2s',
-              cursor: 'pointer',
+              cursor: 'pointer', textAlign: 'left',
             }}
           >
             <div style={{ background: 'rgba(99,102,241,0.25)', borderRadius: '0.75rem', padding: '0.75rem' }}>
@@ -78,17 +92,17 @@ export const LandingPage: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#818cf8', fontWeight: 600, fontSize: '0.9rem', marginTop: '0.5rem' }}>
               Open Candidate Dashboard <ArrowRight className="w-4 h-4" />
             </div>
-          </Link>
+          </button>
 
           {/* Employer Card */}
-          <Link
-            to="/employer"
+          <button
+            onClick={goEmployer}
             style={{
               display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.75rem',
               background: 'rgba(59,130,246,0.12)', border: '1.5px solid rgba(59,130,246,0.4)',
               borderRadius: '1rem', padding: '2rem 2.5rem', minWidth: '260px', maxWidth: '320px',
               color: '#fff', textDecoration: 'none', transition: 'all 0.2s',
-              cursor: 'pointer',
+              cursor: 'pointer', textAlign: 'left',
             }}
           >
             <div style={{ background: 'rgba(59,130,246,0.25)', borderRadius: '0.75rem', padding: '0.75rem' }}>
@@ -103,7 +117,7 @@ export const LandingPage: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#60a5fa', fontWeight: 600, fontSize: '0.9rem', marginTop: '0.5rem' }}>
               Open Employer Dashboard <ArrowRight className="w-4 h-4" />
             </div>
-          </Link>
+          </button>
         </div>
 
         <p style={{ marginTop: '1.25rem', color: '#64748b', fontSize: '0.82rem' }}>
@@ -111,7 +125,7 @@ export const LandingPage: React.FC = () => {
         </p>
       </section>
 
-      {/* 5 Core Pillars Section */}
+      {/* 6 Core Pillars Section */}
       <section className="landing-pillars-section">
         <div className="section-label">HOW SKILLBRIDGE WORKS</div>
         <h2 className="section-heading">Built for Direct Work Evaluation</h2>
@@ -179,9 +193,26 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
+      {/* Stats Section */}
+      <section style={{ padding: '3rem 2rem', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '4rem', flexWrap: 'wrap' }}>
+          {[
+            { value: '2,400+', label: 'Career Returners' },
+            { value: '340+', label: 'Partner Employers' },
+            { value: '89%', label: 'Placement Rate' },
+            { value: '4.8★', label: 'Candidate Rating' },
+          ].map((stat) => (
+            <div key={stat.label}>
+              <div style={{ fontSize: '2rem', fontWeight: 800, color: '#a5b4fc', letterSpacing: '-0.03em' }}>{stat.value}</div>
+              <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '0.25rem' }}>{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Footer */}
       <footer style={{ marginTop: 'auto', borderTop: '1px solid rgba(255, 255, 255, 0.08)', padding: '2rem 1.5rem', textAlign: 'center', color: '#64748b', fontSize: '0.85rem' }}>
-        <p>SkillBridge &copy; 2026. "Don't judge the gap. Evaluate the work." All rights reserved.</p>
+        <p>SkillBridge &copy; 2026. &ldquo;Don't judge the gap. Evaluate the work.&rdquo; All rights reserved.</p>
       </footer>
     </div>
   );

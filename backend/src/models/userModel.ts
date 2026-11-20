@@ -41,6 +41,20 @@ export async function seedDemoAccounts() {
       password: 'SkillBridge@123',
       role: 'employer' as UserRole,
     },
+    {
+      id: 'usr_candidate_priya',
+      name: 'Priya Sharma',
+      email: 'priya.sharma@skillbridge.demo',
+      password: 'SkillBridge@123',
+      role: 'candidate' as UserRole,
+    },
+    {
+      id: 'usr_employer_apex',
+      name: 'Sarah Jenkins (Apex FinTech)',
+      email: 's.jenkins@apexfintech.demo',
+      password: 'SkillBridge@123',
+      role: 'employer' as UserRole,
+    },
   ];
 
   for (const account of demoAccounts) {
